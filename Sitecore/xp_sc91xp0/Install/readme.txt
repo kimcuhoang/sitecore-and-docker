@@ -1,0 +1,1 @@
+- vs_remotetool.exe: https://aka.ms/vs/15/release/RemoteTools.amd64ret.enu.exe

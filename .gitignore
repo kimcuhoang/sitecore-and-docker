@@ -1,0 +1,7 @@
+*.zip
+*.exe
+*.box
+*.msi
+*.pfx
+license.xml
+.env

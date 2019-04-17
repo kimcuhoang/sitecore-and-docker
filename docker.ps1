@@ -10,8 +10,7 @@ Param (
     [switch] $Build,
     [switch] $Init,
     [switch] $Start,
-    [switch] $Down,
-    [switch] $RenewContainers
+    [switch] $Down
 )
 
 $ErrorActionPreference = "STOP"
@@ -267,18 +266,13 @@ If ($Build) {
 
 If ($Start) {
 
-    If ($RenewContainers)
-    {
-        Write-Host "Remove existing containers.................." -ForegroundColor Yellow
-        & docker-compose -f .\docker-compose.yml -p "$($SitecorePrefix)_$($SitecoreVersion)" down -v
-    }
-
     If ($Init -or (-not (Test-Path -Path $MainFolder))) 
     {
         Write-Host "Initialize mount host folder................" -ForegroundColor Green
         Prepare-Mount-Folders
     }
 
+    & docker-compose -f .\docker-compose.yml -p "$($SitecorePrefix)_$($SitecoreVersion)" down -v
     & docker-compose -f .\docker-compose.yml -p "$($SitecorePrefix)_$($SitecoreVersion)" up -d
     $LASTEXITCODE -ne 0 | Where-Object { $_ } | ForEach-Object { throw "Failed." }
 }

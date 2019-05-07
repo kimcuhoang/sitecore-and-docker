@@ -40,3 +40,24 @@ services:
     restart: on-failure
     depends_on:
       - "sitecore_base"
+  
+  sitecore_sqlserver:
+    image: sitecore_sqlserver:${TAG}
+    container_name: ${SITECORE_INSTANCE_PREFIX}_sqlserver
+    build:
+      context: .\sitecore-xp0-images\xp-sqlserver
+      args:
+        XP_RESOURCE_IMG: sitecore_base
+        XP_RESOURCE_IMG_TAG: ${TAG}
+    environment:
+      SA_PASSWORD: ${SA_PASSWORD}
+      SQLSERVER_HOST_NAME: ${SITECORE_INSTANCE_PREFIX}_sqlserver
+      DATABASE_PREFIX: ${SITECORE_INSTANCE_PREFIX}
+      CERT_EXPORT_SECRET: ${CERT_EXPORT_PASSWORD}
+    volumes:
+      - ${HOST_SQLSERVER_DATA_PATH}:C:\SitecoreDatabases
+    ports:
+      - ${SQL_PORT}:1433
+    restart: on-failure
+    depends_on:
+      - "sitecore_base"

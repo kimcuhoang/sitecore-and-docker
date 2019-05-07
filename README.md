@@ -1,4 +1,4 @@
-# Deploy Sitecore 9.1.x to Docker
+# Playing Sitecore-9.1.x (xp0) with Docker
 
 ## Prerequisites
 
@@ -9,7 +9,7 @@
 ## Preparations
 
 1. Suppose this repo is cloned on our local at - `D:\sitecore-and-docker`
-1. Download the following tools then put into `Assets` folder
+1. Download the following tools then put into `sitecore-xp0-images\Install` folder
    - [java-1.8.0-openjdk-1.8.0.161-1.b14.ojdkbuild.windows.x86_64.zip](https://github.com/ojdkbuild/ojdkbuild/releases/download/1.8.0.161-1/java-1.8.0-openjdk-1.8.0.161-1.b14.ojdkbuild.windows.x86_64.zip)
    - [solr-7.2.1.zip](http://archive.apache.org/dist/lucene/solr/7.2.1/solr-7.2.1.zip)
    - [SQLServer2017-DEV-x64-ENU.exe](https://go.microsoft.com/fwlink/?linkid=840945)
@@ -19,13 +19,16 @@
    - [VC_redist.x64.exe](https://aka.ms/vs/15/release/VC_redist.x64.exe)
    - [dotnet-hosting-2.1.3-win.exe](https://dotnet.microsoft.com/download/thank-you/dotnet-runtime-2.1.9-windows-hosting-bundle-installer)
    - [vs_remotetool.exe](https://aka.ms/vs/15/release/RemoteTools.amd64ret.enu.exe)
-   - [Sitecore 9.1.0 rev. 001564 (WDP XP0 packages).zip](https://dev.sitecore.net)
    - [Sitecore 9.1.1 rev. 002459 (WDP XP0 packages).zip](https://dev.sitecore.net)
 1. Also, put our Sitecore license - **license.xml** into `Assets` folder
 
 ## Build Images Base
 
-[TBD]
+- Open **PowerShell** as **Administrator** then execute the below command
+
+    ```powershell
+        docker-compose build -m 4g
+    ```
 
 ## Resources
 

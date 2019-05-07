@@ -1,0 +1,10 @@
+version: '3.5'
+
+services: 
+  sitecore_base:
+    image: sitecore_base:${TAG}
+    build:
+      context: .\sitecore-xp0-images\xp-base
+      args:
+        SITECORE_ZIP_FILE: ${SITECORE_ZIP_FILE}
+        SIF_VERSION: ${SIF_VERSION}

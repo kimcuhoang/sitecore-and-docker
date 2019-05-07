@@ -8,3 +8,13 @@ services:
       args:
         SITECORE_ZIP_FILE: ${SITECORE_ZIP_FILE}
         SIF_VERSION: ${SIF_VERSION}
+  
+  sitecore_base_webserver:
+    image: sitecore_base_webserver:${TAG}
+    build:
+      context: .\sitecore-xp0-images\xp-base-webserver
+      args:
+        XP_RESOURCE_IMG: sitecore_base
+        XP_RESOURCE_IMG_TAG: ${TAG}
+    depends_on:
+      - "sitecore_base"

@@ -136,3 +136,20 @@ services:
     restart: on-failure
     depends_on:
       - "sitecore_xconnect"
+
+  sitecore_xconnect_indexworker:
+    image: sitecore_xconnect_indexworker:${TAG}
+    container_name: ${SITECORE_INSTANCE_PREFIX}_xconnect_indexworker
+    build:
+      context: .\sitecore-xp0-images\xp-xconnect-indexworker
+    environment:
+      SITECORE_SOLR_HOST_NAME: ${SITECORE_INSTANCE_PREFIX}_solr
+      SITECORE_SOLR_PORT: ${SOLR_PORT}
+      CERT_EXPORT_SECRET: ${CERT_EXPORT_PASSWORD}
+    volumes:
+      - ${HOST_XCONNECT_WEBROOT}:C:\xConnectJobs
+      - ${HOST_XCONNECT_INDEX_WORKER}:C:/IndexWorker
+      - ${HOST_CERTIFICATE_PATH}:C:/Certificates
+    restart: on-failure
+    depends_on:
+      - "sitecore_xconnect"

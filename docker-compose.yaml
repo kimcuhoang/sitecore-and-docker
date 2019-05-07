@@ -89,3 +89,32 @@ services:
     depends_on:
       - "sitecore_base_webserver"
       - "sitecore_sqlserver"
+
+  sitecore_xconnect:
+    image: sitecore_xconnect:${TAG}
+    container_name: ${SITECORE_INSTANCE_PREFIX}_xconnect.dev.local
+    build:
+      context: .\sitecore-xp0-images\xp-xconnect
+      args:
+        XP_WEBSERVER_IMG: sitecore_base_webserver
+        XP_WEBSERVER_IMG_TAG: ${TAG}
+    environment:
+      SITECORE_XCONNECT_HOST_NAME: ${SITECORE_INSTANCE_PREFIX}_xconnect.dev.local
+      SITECORE_XCONNECT_CLIENT_CERT_NAME: ${SITECORE_INSTANCE_PREFIX}_xconnect_client.dev.local
+      SITECORE_XCONNECT_PORT: ${XCONNECT_PORT}
+      CERT_EXPORT_SECRET: ${CERT_EXPORT_PASSWORD}
+      SITECORE_SOLR_HOST_NAME: ${SITECORE_INSTANCE_PREFIX}_solr
+      SITECORE_SOLR_PORT: ${SOLR_PORT}
+      SQLSERVER_HOST_NAME: ${SITECORE_INSTANCE_PREFIX}_sqlserver
+      SQL_ADMIN_SECRET: ${SA_PASSWORD}
+      SITECORE_INSTANCE_PREFIX: ${SITECORE_INSTANCE_PREFIX}
+    ports:
+      - ${XCONNECT_PORT}:${XCONNECT_PORT}
+    volumes:
+      - ${HOST_XCONNECT_WEBROOT}:C:\inetpub\wwwroot\${SITECORE_INSTANCE_PREFIX}_xconnect.dev.local
+      - ${HOST_CERTIFICATE_PATH}:C:/Certificates
+    restart: on-failure
+    depends_on:
+      - "sitecore_base_webserver"
+      - "sitecore_sqlserver"
+      - "sitecore_solr"

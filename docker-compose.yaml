@@ -18,3 +18,25 @@ services:
         XP_RESOURCE_IMG_TAG: ${TAG}
     depends_on:
       - "sitecore_base"
+  
+  sitecore_solr:
+    image: sitecore_solr:${TAG}
+    container_name: ${SITECORE_INSTANCE_PREFIX}_solr
+    build:
+      context: .\sitecore-xp0-images\xp-solr
+      args:
+        XP_RESOURCE_IMG: sitecore_base
+        XP_RESOURCE_IMG_TAG: ${TAG}
+    environment:
+      SOLR_HOST_NAME: ${SITECORE_INSTANCE_PREFIX}_solr
+      SOLR_CORE_PREFIX: ${SITECORE_INSTANCE_PREFIX}
+      SOLR_PORT: ${SOLR_PORT}
+      CERT_EXPORT_SECRET: ${CERT_EXPORT_PASSWORD}
+    ports:
+      - ${SOLR_PORT}:${SOLR_PORT}
+    volumes:
+      - ${HOST_CERTIFICATE_PATH}:C:\Certificates
+      - ${HOST_SOLR_DATA_PATH}:C:\SolrData
+    restart: on-failure
+    depends_on:
+      - "sitecore_base"

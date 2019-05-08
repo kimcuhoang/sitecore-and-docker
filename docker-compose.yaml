@@ -153,3 +153,15 @@ services:
     restart: on-failure
     depends_on:
       - "sitecore_xconnect"
+
+  sitecore_xconnect_processingengine:
+    image: sitecore_xconnect_processingengine:${TAG}
+    container_name: ${SITECORE_INSTANCE_PREFIX}_xconnect_processingengine
+    build:
+      context: .\sitecore-xp0-images\xp-xconnect-processingengine
+    volumes:
+      - ${HOST_XCONNECT_WEBROOT}:C:\xConnectJobs
+      - ${HOST_XCONNECT_PROCESSING_ENGINE}:C:/ProcessingEngine
+    restart: on-failure
+    depends_on:
+      - "sitecore_xconnect"

@@ -5,8 +5,8 @@ SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPref
 
 COPY /Install /Install
 
-ARG SITECORE_ZIP_FILE
-ARG SIF_VERSION
+ARG SITECORE_ZIP_FILE='Sitecore 9.1.1 rev. 002459 (WDP XP0 packages).zip'
+ARG SIF_VERSION='2.1.0'
 
 ENV INSTALL_PATH=C:\Install
 

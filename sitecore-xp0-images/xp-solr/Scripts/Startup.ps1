@@ -48,9 +48,9 @@ If ((Get-ChildItem "$($SolrDataPath)" | Measure-Object).Count -eq 0) {
         $content | Set-Content -Path "$($_.FullName)\core.properties"
         Rename-Item -Path $_.FullName -NewName $newname
     }
-    $env:SOLR_HOME = $SolrDataPath
+    
 }
 
-
+$env:SOLR_HOME = $SolrDataPath
 Write-Host "#### Starting Solr at $($SolrUrl)"
 & "$($SolrInstallPath)\bin\solr.cmd" start -port $SolrPort

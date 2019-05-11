@@ -1,6 +1,8 @@
 param (
     [string] $SitecoreSolrHostName,
     [int] $SitecoreSolrPort,
+    [string] $xConnectHostName,
+    [int] $xConnectPort,
     [string] $CertExportPath,
     [string] $CertExportSecret,
     [string] $xConnectIndexWorkerPath,
@@ -11,8 +13,7 @@ $ErrorActionPreference = 'Stop'
 
 Function Import-Certificate {
     param(
-        [string] $HostName,
-        [string] $CertStore
+        [string] $HostName
     )
 
     $PfxPath = Join-Path -Path $CertExportPath -ChildPath "$($HostName).pfx"
@@ -30,28 +31,36 @@ Function Import-Certificate {
     }
 }
 
-Function Verify-Solr-Connection {
-    $SolrUrl = "https://$($SitecoreSolrHostName):$($SitecoreSolrPort)"
-    Write-Host "#### Verifying Solr's Connection: $($SolrUrl)"
-    $request = [System.Net.WebRequest]::Create($SolrUrl)
+Function Verify-Connection {
+    param (
+        [string] $Url
+    )
+
+    Write-Host "#### Verifying the connection to : $($Url)"
+    $request = [System.Net.WebRequest]::Create($Url)
     $response = $request.GetResponse()
     $StatusCode = [int]$response.StatusCode
-    If ($response.StatusCode -ne 200) {
-        throw "Could not contact Solr on '$SolrUrl'. Response status was $($StatusCode)"
+    If ($StatusCode -ne 200) {
+        throw "Could not contact to '$Url'. Response status was $($StatusCode)"
     } 
-    Write-Host "Solr's Connection: $($StatusCode)"
+    Write-Host "The connection status: $($StatusCode)"
 }
 
 ####################################################################################
 ####################################################################################
 ####################################################################################
 Import-Certificate -HostName $SitecoreSolrHostName
+Import-Certificate -HostName $xConnectHostName
 
-Verify-Solr-Connection
+$SolrUrl = "https://$($SitecoreSolrHostName):$($SitecoreSolrPort)/solr"
+$xConnectUrl = "https://$($xConnectHostName):$($xConnectPort)"
+
+Verify-Connection -Url $SolrUrl
+Verify-Connection -Url $xConnectUrl
 
 $IndexWorkerJobPath = Join-Path -Path $xConnectJobs -ChildPath "App_Data\jobs\continuous\IndexWorker"
-If (-not (Test-Path -Path "$($IndexWorkerJobPath)\XConnectSearchIndexer.exe.config")) {
-    Copy-Item -Path "$($IndexWorkerJobPath)\*" -Destination "$($xConnectIndexWorkerPath)" -Recurse
+If (-not (Test-Path -Path "$($xConnectIndexWorkerPath)\XConnectSearchIndexer.exe")) {
+    Copy-Item -Path "$($IndexWorkerJobPath)\*" -Destination "$($xConnectIndexWorkerPath)" -Recurse -Force
 }
 
 & "$($xConnectIndexWorkerPath)\XConnectSearchIndexer.exe"

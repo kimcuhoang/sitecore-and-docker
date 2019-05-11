@@ -14,6 +14,7 @@ param (
     [string] $CertExportSecret, 
     [string] $SitecoreInstallPath,
     [string] $SqlServerHostName,
+    [string] $SqlServerPort,
     [string] $SqlAdminUser,
     [string] $SqlAdminSecret,
     [string] $SitecoreInstancePrefix
@@ -46,6 +47,10 @@ Function Install-XP0 {
     Write-Host "Identity Server: $($SitecoreIdentityServerUrl)"
     Write-Host "xConnect Url: $($SitecoreXConnectUrl)"
     Write-Host "##################################################################"
+
+    If ($SqlServerPort -ne "1433") {
+        $SqlServerHostName = "$($SqlServerHostName), $($SqlServerPort)"
+    }
 
     Install-SitecoreConfiguration -Path (Join-Path -Path $SitecoreInstallPath -ChildPath "sitecore-XP0.json") `
                                     -Package (Join-Path -Path $SitecoreInstallPath -ChildPath "Sitecore_single.scwdp.zip") `
@@ -139,5 +144,13 @@ If (-not (Test-Path -Path "$($SitecoreWebRoot)\web.config")) {
 
     Install-XP0
 }
+
+$w3svcService = Get-Service -Name "w3svc"
+If (($null -eq $w3svcService) -or ($w3svcService.Status -ne "Running")) {
+    Start-Service w3svc -Verbose
+}
+
+Write-Host "IIS Started..."
+while ($true) { Start-Sleep -Seconds 3600 }
 
 & C:\ServiceMonitor.exe w3svc

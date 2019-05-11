@@ -6,7 +6,10 @@ ARG XP_RESOURCE_IMG_TAG
 FROM ${XP_RESOURCE_IMG}:${XP_RESOURCE_IMG_TAG}
 SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
 
+ARG SQLSERVER_PORT_ARG=1433
+
 ENV SQLSERVER_HOST_NAME=sitecore_sqlserver`
+    SQLSERVER_PORT=${SQLSERVER_PORT_ARG} `
     SA_PASSWORD=Abc@123`
     ACCEPT_EULA='Y'`
     SQLSERVER_DATA_PATH=C:\SitecoreDatabases`
@@ -32,6 +35,7 @@ RUN New-Item -Path 'C:/tools' -ItemType Directory | Out-Null; `
     & nuget install Microsoft.Data.Tools.Msbuild -Version 10.0.61710.120 -OutputDirectory c:/tools
 
 COPY /Scripts /Scripts
+
 RUN $AssetInstallPath = $env:INSTALL_PATH; `
     $FreshDatabasesPath = $env:SQLSERVER_DATA_BACKUP_PATH;`
     $DatabasePrefix = $env:DEFAULT_DB_PREFIX; `
@@ -45,10 +49,17 @@ RUN $AssetInstallPath = $env:INSTALL_PATH; `
                                     -DatabasePrefix $DatabasePrefix `
                                     -SqlServerHostName $SqlServerHostName;
 
-EXPOSE 1433
+RUN & C:/Scripts/ChangePort-SqlServer.ps1 -SqlPort $env:SQLSERVER_PORT
+
+RUN Stop-Service MSSQLSERVER; `
+    Set-ItemProperty -Path 'HKLM:\software\microsoft\microsoft sql server\mssql14.MSSQLSERVER\mssqlserver\supersocketnetlib\tcp\ipall' -Name tcpport -Value $env:SQLSERVER_PORT;
+
+RUN Remove-Item -Path $env:INSTALL_PATH -Recurse -Force
+
+EXPOSE ${SQLSERVER_PORT}
 
 CMD C:\Scripts\Startup.ps1 -SqlServerHostName $env:SQLSERVER_HOST_NAME `
-                           -AssetInstallPath $env:INSTALL_PATH `
+                           -SqlServerPort $env:SQLSERVER_PORT `
                            -FreshDatabasesPath $env:SQLSERVER_DATA_BACKUP_PATH `
                            -DatabasesPath $env:SQLSERVER_DATA_PATH `
                            -SASecret $env:SA_PASSWORD `

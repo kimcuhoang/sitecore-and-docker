@@ -20,14 +20,28 @@ If ($Import) {
     $cert = Get-ChildItem -Path $CertStore | Where-Object { $_.subject -eq "CN=$($CertName)"}
 
     if ($null -eq $cert) {
-        $cert = New-SelfSignedCertificate `
+
+        if (Test-Path -Path $CertPfxPath) {
+            Write-Host "######### Importing $($CertPfxFile) since it's existing ######################"
+
+            Import-PfxCertificate -FilePath $CertPfxPath -CertStoreLocation 'Cert:\LocalMachine\Root' -Password $secret;
+            Import-PfxCertificate -FilePath $CertPfxPath -CertStoreLocation 'Cert:\LocalMachine\My' -Password $secret;
+        } else {
+            Write-Host "######### Generating $($CertPfxFile) since it's not existed ##################"
+
+            $cert = New-SelfSignedCertificate `
                     -CertStoreLocation $CertStore -DnsName $CertName `
                     -KeyExportPolicy Exportable -Provider 'Microsoft Enhanced RSA and AES Cryptographic Provider'
-    }
-    
-    if (-not (Test-Path -Path $CertPfxPath)) {
-        Export-PfxCertificate -cert $cert -FilePath $CertPfxPath -Password $secret
-        Import-PfxCertificate -FilePath $CertPfxPath -CertStoreLocation 'Cert:\LocalMachine\Root' -Password $secret;
+            
+            Export-PfxCertificate -cert $cert -FilePath $CertPfxPath -Password $secret
+
+            Import-PfxCertificate -FilePath $CertPfxPath -CertStoreLocation 'Cert:\LocalMachine\Root' -Password $secret;
+        }
+        
+    } else {
+        If (-not (Test-Path -Path $CertPfxPath)) {
+            Export-PfxCertificate -cert $cert -FilePath $CertPfxPath -Password $secret
+        }
     }
 }
 

@@ -6,8 +6,10 @@ ARG XP_WEBSERVER_IMG_TAG
 FROM ${XP_WEBSERVER_IMG}:${XP_WEBSERVER_IMG_TAG}
 SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
 
+ARG SITECORE_SITE_PORT_ARG=80
+
 ENV SITECORE_SITE_HOST_NAME=sitecore.dev.local `
-    SITECORE_SITE_PORT=80 `
+    SITECORE_SITE_PORT=${SITECORE_SITE_PORT_ARG} `
     SITECORE_ADMIN_SECRET='b' `
     SITECORE_IDENTITYSERVER_HOST_NAME=sitecore_identityserver.dev.local `
     SITECORE_IDENTITYSERVER_PORT=443 `
@@ -21,6 +23,7 @@ ENV SITECORE_SITE_HOST_NAME=sitecore.dev.local `
     SITECORE_SOLR_PORT=8983 `
     SITECORE_INSTALL_PATH=C:\SitecoreInstall `
     SQLSERVER_HOST_NAME=sitecore_sqlserver `
+    SQLSERVER_PORT=1433 `
     SQL_ADMIN_USER=sa `
     SQL_ADMIN_SECRET=Abc@123 `
     SITECORE_INSTANCE_PREFIX=sitecore
@@ -61,6 +64,7 @@ CMD C:\Scripts\Startup.ps1 -SitecoreSiteHostName $env:SITECORE_SITE_HOST_NAME `
                              -CertExportSecret $env:CERT_EXPORT_SECRET `
                              -SitecoreInstallPath $env:SITECORE_INSTALL_PATH `
                              -SqlServerHostName $env:SQLSERVER_HOST_NAME `
+                             -SqlServerPort $env:SQLSERVER_PORT `
                              -SqlAdminUser $env:SQL_ADMIN_USER `
                              -SqlAdminSecret $env:SQL_ADMIN_SECRET `
                              -SitecoreInstancePrefix $env:SITECORE_INSTANCE_PREFIX

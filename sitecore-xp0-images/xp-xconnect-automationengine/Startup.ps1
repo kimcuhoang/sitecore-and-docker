@@ -12,8 +12,7 @@ $ErrorActionPreference = 'Stop'
 
 Function Import-Certificate {
     param(
-        [string] $HostName,
-        [string] $CertStore
+        [string] $HostName
     )
 
     $PfxPath = Join-Path -Path $CertExportPath -ChildPath "$($HostName).pfx"
@@ -52,8 +51,8 @@ Import-Certificate -HostName $xConnectClientCertName
 Verify-xConnect-Connection
 
 $AutomationEngineJobPath = Join-Path -Path $xConnectJobs -ChildPath "App_Data\jobs\continuous\AutomationEngine"
-If (-not (Test-Path -Path "$($xConnectAutomationEnginePath)\maengine.exe.config")) {
-    Copy-Item -Path "$($AutomationEngineJobPath)\*" -Destination "$($xConnectAutomationEnginePath)" -Recurse
+If (-not (Test-Path -Path "$($xConnectAutomationEnginePath)\maengine.exe")) {
+    Copy-Item -Path "$($AutomationEngineJobPath)\*" -Destination "$($xConnectAutomationEnginePath)" -Recurse -Force
 }
 
 & "$($xConnectAutomationEnginePath)\maengine.exe"

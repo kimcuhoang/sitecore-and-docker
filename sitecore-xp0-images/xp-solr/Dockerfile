@@ -6,6 +6,8 @@ ARG XP_RESOURCE_IMG_TAG
 FROM ${XP_RESOURCE_IMG}:${XP_RESOURCE_IMG_TAG}
 SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
 
+ARG SOLR_PORT_ARG=8983
+
 # Install JAVA
 ENV JAVA_HOME=C:\OpenJDK `
     SIF_CONFIG_PATH=C:\SIFConfig `
@@ -13,7 +15,7 @@ ENV JAVA_HOME=C:\OpenJDK `
     SOLR_DATA_PATH=C:\SolrData`
     CERT_PATH=C:\Certificates `
     SOLR_HOST_NAME=sitecore_solr `
-    SOLR_PORT=8983 `
+    SOLR_PORT=${SOLR_PORT_ARG} `
     CERT_EXPORT_SECRET=secret `
     SOLR_CORE_PREFIX=sitecore `
     DEFAULT_SOLR_CORE_PREFIX=sitecore

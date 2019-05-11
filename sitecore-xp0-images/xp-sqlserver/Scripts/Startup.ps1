@@ -1,8 +1,6 @@
 param (
     [string] $SqlServerHostName,
-    [Parameter(Mandatory = $true)]
-    [ValidateScript( {Test-Path $_ -PathType 'Container'})] 
-    [string] $AssetInstallPath,
+    [string] $SqlServerPort,
     [Parameter(Mandatory = $true)]
     [ValidateScript( {Test-Path $_ -PathType 'Container'})] 
     [string] $FreshDatabasesPath,
@@ -33,18 +31,30 @@ If ($null -eq (Get-ChildItem -Path $DatabasesPath -Filter "*.mdf")) {
     
         Invoke-Sqlcmd -Query $sqlcmd
     }
-
+    
     # See http://jonne.github.io/2017/dockerizing-sitecore-9-xp0/ for details...
     Invoke-Sqlcmd -Query ("EXEC sp_MSforeachdb 'IF charindex(''{0}'', ''?'' ) = 1 BEGIN EXEC [?]..sp_changedbowner ''sa'' END'" -f $DatabasePrefix)
-
+    
     # See http://jonnekats.nl/2017/sql-connection-issue-xconnect/ for details...
     Invoke-Sqlcmd -Query ("UPDATE [{0}_Xdb.Collection.ShardMapManager].[__ShardManagement].[ShardsGlobal] SET ServerName = '{1}'" -f $DatabasePrefix, $SqlServerHostName)
     Invoke-Sqlcmd -Query ("UPDATE [{0}_Xdb.Collection.Shard0].[__ShardManagement].[ShardsLocal] SET ServerName = '{1}'" -f $DatabasePrefix, $SqlServerHostName)
     Invoke-Sqlcmd -Query ("UPDATE [{0}_Xdb.Collection.Shard1].[__ShardManagement].[ShardsLocal] SET ServerName = '{1}'" -f $DatabasePrefix, $SqlServerHostName)
+    
+    # Update Shard databases
+    Invoke-Sqlcmd -Query ("UPDATE [{0}_Xdb.Collection.ShardMapManager].[__ShardManagement].[ShardsGlobal] SET DatabaseName = '{0}_Xdb.Collection.Shard0' WHERE DatabaseName='{1}_Xdb.Collection.Shard0'" -f $DatabasePrefix, $DefaultDBPrefix)
+    Invoke-Sqlcmd -Query ("UPDATE [{0}_Xdb.Collection.ShardMapManager].[__ShardManagement].[ShardsGlobal] SET DatabaseName = '{0}_Xdb.Collection.Shard1' WHERE DatabaseName='{1}_Xdb.Collection.Shard1'" -f $DatabasePrefix, $DefaultDBPrefix)
+    Invoke-Sqlcmd -Query ("UPDATE [{0}_Xdb.Collection.Shard0].[__ShardManagement].[ShardsLocal] SET DatabaseName = '{0}_Xdb.Collection.Shard0' WHERE DatabaseName='{1}_Xdb.Collection.Shard0'" -f $DatabasePrefix, $DefaultDBPrefix)
+    Invoke-Sqlcmd -Query ("UPDATE [{0}_Xdb.Collection.Shard1].[__ShardManagement].[ShardsLocal] SET DatabaseName = '{0}_Xdb.Collection.Shard1' WHERE DatabaseName='{1}_Xdb.Collection.Shard1'" -f $DatabasePrefix, $DefaultDBPrefix)
+    
+    If ($SqlServerPort -ne "1433") {
+        Invoke-Sqlcmd -Query ("UPDATE [{0}_Xdb.Collection.ShardMapManager].[__ShardManagement].[ShardsGlobal] SET Port = '{1}'" -f $DatabasePrefix, $SqlServerPort)
+        Invoke-Sqlcmd -Query ("UPDATE [{0}_Xdb.Collection.Shard0].[__ShardManagement].[ShardsLocal] SET Port = '{1}'" -f $DatabasePrefix, $SqlServerPort)
+        Invoke-Sqlcmd -Query ("UPDATE [{0}_Xdb.Collection.Shard1].[__ShardManagement].[ShardsLocal] SET Port = '{1}'" -f $DatabasePrefix, $SqlServerPort)
+    }
 }
 
+
 Write-Host "### Sitecore databases ready!"
-Remove-Item -Path $env:INSTALL_PATH -Recurse -Force
 
 # Call Start.ps1 from the base image https://github.com/Microsoft/mssql-docker/blob/master/windows/mssql-server-windows-developer/dockerfile
 & C:\Scripts\Start-SqlServer.ps1 -sa_password $SASecret `

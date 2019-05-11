@@ -6,6 +6,7 @@ param (
     [string] $CertExportSecret,
     [string] $SitecoreInstallPath,
     [string] $SqlServerHostName,
+    [string] $SqlServerPort,
     [string] $DatabasePrefix,
     [string] $SqlAdminUser,
     [string] $SqlAdminSecret,
@@ -34,6 +35,10 @@ If (-not (Test-Path -Path $WebConfig)) {
 
     Write-Host "#### Install Sitecore's Identity Server at $($SitecoreIdentityServerUrl)"
 
+    If ($SqlServerPort -ne "1433") {
+        $SqlServerHostName = "$($SqlServerHostName), $($SqlServerPort)"
+    }
+
     Install-SitecoreConfiguration `
             -Path (Join-Path -Path $SitecoreInstallPath -ChildPath 'IdentityServer.json') `
             -Package (Join-Path -Path $SitecoreInstallPath -ChildPath 'Sitecore_identityserver.scwdp.zip') `
@@ -48,6 +53,11 @@ If (-not (Test-Path -Path $WebConfig)) {
             -ClientSecret $SitecoreIdentityServerClientSecret `
             -SitecoreIdentityCert $SitecoreIdentityServerHostName `
             -Skip "CreateHostHeader"
+}
+
+$w3svcService = Get-Service -Name "w3svc"
+If (($null -eq $w3svcService) -or ($w3svcService.Status -ne "Running")) {
+    Start-Service w3svc -Verbose
 }
 
 & C:\ServiceMonitor.exe w3svc

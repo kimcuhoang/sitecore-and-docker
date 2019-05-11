@@ -27,6 +27,7 @@ services:
       args:
         XP_RESOURCE_IMG: sitecore_base
         XP_RESOURCE_IMG_TAG: ${TAG}
+        SOLR_PORT_ARG: ${SOLR_PORT}
     environment:
       SOLR_HOST_NAME: ${SITECORE_INSTANCE_PREFIX}_solr
       SOLR_CORE_PREFIX: ${SITECORE_INSTANCE_PREFIX}
@@ -49,15 +50,17 @@ services:
       args:
         XP_RESOURCE_IMG: sitecore_base
         XP_RESOURCE_IMG_TAG: ${TAG}
+        SQLSERVER_PORT_ARG: ${SQL_PORT}
     environment:
       SA_PASSWORD: ${SA_PASSWORD}
       SQLSERVER_HOST_NAME: ${SITECORE_INSTANCE_PREFIX}_sqlserver
+      SQLSERVER_PORT: ${SQL_PORT}
       DATABASE_PREFIX: ${SITECORE_INSTANCE_PREFIX}
       CERT_EXPORT_SECRET: ${CERT_EXPORT_PASSWORD}
     volumes:
       - ${HOST_SQLSERVER_DATA_PATH}:C:\SitecoreDatabases
     ports:
-      - ${SQL_PORT}:1433
+      - ${SQL_PORT}:${SQL_PORT}
     restart: on-failure
     depends_on:
       - "sitecore_base"
@@ -70,12 +73,14 @@ services:
       args:
         XP_WEBSERVER_IMG: sitecore_base_webserver
         XP_WEBSERVER_IMG_TAG: ${TAG}
+        SITECORE_IDENTITYSERVER_PORT_ARG: ${IDENTITYSERVER_PORT}
     environment:
       SITECORE_IDENTITYSERVER_HOST_NAME: ${SITECORE_INSTANCE_PREFIX}_identityserver.dev.local
       SITECORE_IDENTITYSERVER_PORT: ${IDENTITYSERVER_PORT}
       SITECORE_IDENTITYSERVER_CLIENT_SECRET: ${SITECORE_IDENTITYSERVER_CLIENT_SECRET}
       CERT_EXPORT_SECRET: ${CERT_EXPORT_PASSWORD}
       SQLSERVER_HOST_NAME: ${SITECORE_INSTANCE_PREFIX}_sqlserver
+      SQLSERVER_PORT: ${SQL_PORT}
       DATABASE_PREFIX: ${SITECORE_INSTANCE_PREFIX}
       SQL_ADMIN_SECRET: ${SA_PASSWORD}
       SITECORE_SITE_HOST_NAME: ${SITECORE_INSTANCE_PREFIX}.dev.local
@@ -98,6 +103,7 @@ services:
       args:
         XP_WEBSERVER_IMG: sitecore_base_webserver
         XP_WEBSERVER_IMG_TAG: ${TAG}
+        SITECORE_XCONNECT_PORT_ARG: ${XCONNECT_PORT}
     environment:
       SITECORE_XCONNECT_HOST_NAME: ${SITECORE_INSTANCE_PREFIX}_xconnect.dev.local
       SITECORE_XCONNECT_CLIENT_CERT_NAME: ${SITECORE_INSTANCE_PREFIX}_xconnect_client.dev.local
@@ -106,6 +112,7 @@ services:
       SITECORE_SOLR_HOST_NAME: ${SITECORE_INSTANCE_PREFIX}_solr
       SITECORE_SOLR_PORT: ${SOLR_PORT}
       SQLSERVER_HOST_NAME: ${SITECORE_INSTANCE_PREFIX}_sqlserver
+      SQLSERVER_PORT: ${SQL_PORT}
       SQL_ADMIN_SECRET: ${SA_PASSWORD}
       SITECORE_INSTANCE_PREFIX: ${SITECORE_INSTANCE_PREFIX}
     ports:
@@ -145,6 +152,8 @@ services:
     environment:
       SITECORE_SOLR_HOST_NAME: ${SITECORE_INSTANCE_PREFIX}_solr
       SITECORE_SOLR_PORT: ${SOLR_PORT}
+      SITECORE_XCONNECT_HOST_NAME: ${SITECORE_INSTANCE_PREFIX}_xconnect.dev.local
+      SITECORE_XCONNECT_PORT: ${XCONNECT_PORT}
       CERT_EXPORT_SECRET: ${CERT_EXPORT_PASSWORD}
     volumes:
       - ${HOST_XCONNECT_WEBROOT}:C:\xConnectJobs
@@ -159,9 +168,14 @@ services:
     container_name: ${SITECORE_INSTANCE_PREFIX}_xconnect_processingengine
     build:
       context: .\sitecore-xp0-images\xp-xconnect-processingengine
+    environment:
+      SITECORE_XCONNECT_HOST_NAME: ${SITECORE_INSTANCE_PREFIX}_xconnect.dev.local
+      SITECORE_XCONNECT_PORT: ${XCONNECT_PORT}
+      CERT_EXPORT_SECRET: ${CERT_EXPORT_PASSWORD}
     volumes:
       - ${HOST_XCONNECT_WEBROOT}:C:\xConnectJobs
       - ${HOST_XCONNECT_PROCESSING_ENGINE}:C:/ProcessingEngine
+      - ${HOST_CERTIFICATE_PATH}:C:/Certificates
     restart: on-failure
     depends_on:
       - "sitecore_xconnect"
@@ -174,6 +188,7 @@ services:
       args:
         XP_WEBSERVER_IMG: sitecore_base_webserver
         XP_WEBSERVER_IMG_TAG: ${TAG}
+        SITECORE_SITE_PORT_ARG: ${SITECORE_SITE_PORT}
     environment:
       SITECORE_SITE_HOST_NAME: ${SITECORE_INSTANCE_PREFIX}.dev.local
       SITECORE_SITE_PORT: ${SITECORE_SITE_PORT}
@@ -188,6 +203,7 @@ services:
       SITECORE_SOLR_HOST_NAME: ${SITECORE_INSTANCE_PREFIX}_solr
       SITECORE_SOLR_PORT: ${SOLR_PORT}
       SQLSERVER_HOST_NAME: ${SITECORE_INSTANCE_PREFIX}_sqlserver
+      SQLSERVER_PORT: ${SQL_PORT}
       SQL_ADMIN_SECRET: ${SA_PASSWORD}
       SITECORE_INSTANCE_PREFIX: ${SITECORE_INSTANCE_PREFIX}
     ports:

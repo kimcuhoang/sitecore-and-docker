@@ -8,13 +8,16 @@ SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPref
 
 RUN Start-Process (Join-Path $env:INSTALL_PATH '\\dotnet-hosting-2.1.3-win.exe') -ArgumentList '/install', '/passive', '/norestart' -NoNewWindow -Wait
 
+ARG SITECORE_IDENTITYSERVER_PORT_ARG=443
+
 ENV SITECORE_IDENTITYSERVER_HOST_NAME=sitecore_identityserver.dev.local `
-    SITECORE_IDENTITYSERVER_PORT=443 `
+    SITECORE_IDENTITYSERVER_PORT=${SITECORE_IDENTITYSERVER_PORT_ARG} `
     SITECORE_IDENTITYSERVER_CLIENT_SECRET=Abc@123 `
     CERT_EXPORT_SECRET=secret `
     CERT_EXPORT_PATH=C:\Certificates `
     SITECORE_INSTALL_PATH=C:\SitecoreInstall `
     SQLSERVER_HOST_NAME=sitecore_sqlserver `
+    SQLSERVER_PORT=1433 `
     DATABASE_PREFIX=sitecore `
     SQL_ADMIN_USER=sa `
     SQL_ADMIN_SECRET=Abc@123 `
@@ -49,6 +52,7 @@ CMD & C:\Scripts\Startup.ps1 -SitecoreIdentityServerHostName $env:SITECORE_IDENT
                              -CertExportSecret $env:CERT_EXPORT_SECRET `
                              -SitecoreInstallPath $env:SITECORE_INSTALL_PATH `
                              -SqlServerHostName $env:SQLSERVER_HOST_NAME `
+                             -SqlServerPort $env:SQLSERVER_PORT `
                              -DatabasePrefix $env:DATABASE_PREFIX `
                              -SqlAdminUser $env:SQL_ADMIN_USER `
                              -SqlAdminSecret $env:SQL_ADMIN_SECRET `

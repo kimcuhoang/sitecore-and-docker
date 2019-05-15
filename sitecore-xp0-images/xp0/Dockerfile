@@ -26,10 +26,17 @@ ENV SITECORE_SITE_HOST_NAME=sitecore.dev.local `
     SQLSERVER_PORT=1433 `
     SQL_ADMIN_USER=sa `
     SQL_ADMIN_SECRET=Abc@123 `
-    SITECORE_INSTANCE_PREFIX=sitecore
+    SITECORE_INSTANCE_PREFIX=sitecore `
+    SITECORE_PROJECT_SRC=C:\SitecoreProjectSource
+
+### Enable Remote Debug
+COPY /Enable-Remote-Debug.cmd /
+RUN Start-Process (Join-Path $env:INSTALL_PATH '\\vs_remotetools.exe') -ArgumentList '/install', '/passive', '/norestart' -NoNewWindow -Wait; `
+    setx /M PATH ('{0};{1}' -f 'C:\Program Files\Microsoft Visual Studio 15.0\Common7\IDE\Remote Debugger\x64', $env:PATH);
 
 RUN New-Item -Path $env:SITECORE_INSTALL_PATH -ItemType Directory | Out-Null; `
     New-Item -Path $env:CERT_EXPORT_PATH -ItemType Directory | Out-Null; `
+    New-Item -Path $env:SITECORE_PROJECT_SRC -ItemType Directory | Out-Null; `
     Copy-Item -Path (Join-Path -Path $env:INSTALL_PATH -ChildPath 'sitecore-XP0.json') -Destination $env:SITECORE_INSTALL_PATH; `
     Copy-Item -Path (Join-Path -Path $env:INSTALL_PATH -ChildPath 'Sitecore_single.scwdp.zip') -Destination $env:SITECORE_INSTALL_PATH; `
     Copy-Item -Path (Join-Path -Path $env:INSTALL_PATH -ChildPath 'license.xml') -Destination $env:SITECORE_INSTALL_PATH; `
@@ -47,7 +54,7 @@ RUN $config = Get-Content (Join-Path -Path $env:SITECORE_INSTALL_PATH -ChildPath
 
 COPY /Scripts /Scripts
 
-EXPOSE ${SITECORE_SITE_PORT}
+EXPOSE ${SITECORE_SITE_PORT} 4022 4023
 
 CMD C:\Scripts\Startup.ps1 -SitecoreSiteHostName $env:SITECORE_SITE_HOST_NAME `
                              -SitecoreSitePort $env:SITECORE_SITE_PORT `

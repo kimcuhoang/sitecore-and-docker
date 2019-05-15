@@ -57,12 +57,9 @@ RUN Remove-Item -Recurse C:\inetpub\wwwroot\*; `
 
 RUN Start-Process msiexec.exe -ArgumentList '/i', (Join-Path $env:INSTALL_PATH '\\WebDeploy_amd64_en-US.msi'), '/quiet', '/norestart' -NoNewWindow -Wait; `
     Start-Process msiexec.exe -ArgumentList '/i', (Join-Path $env:INSTALL_PATH '\\rewrite_amd64_en-US.msi'), '/quiet', '/norestart' -NoNewWindow -Wait; `
-    Start-Process (Join-Path $env:INSTALL_PATH '\\vc_redist.x64.exe') -ArgumentList '/install', '/passive', '/norestart' -NoNewWindow -Wait ;`
-    Start-Process (Join-Path $env:INSTALL_PATH '\\vs_remotetools.exe') -ArgumentList '/install', '/passive', '/norestart' -NoNewWindow -Wait; `
-    setx /M PATH ('{0};{1}' -f 'C:\Program Files\Microsoft Visual Studio 15.0\Common7\IDE\Remote Debugger\x64', $env:PATH); 
-
+    Start-Process (Join-Path $env:INSTALL_PATH '\\vc_redist.x64.exe') -ArgumentList '/install', '/passive', '/norestart' -NoNewWindow -Wait ;
+    
 COPY /Sitecore /Sitecore
-COPY /Enable-Remote-Debug.cmd /
 
 RUN Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters' -Name ServerPriorityTimeLimit -Value 0 -Type DWord; `
     setx /M PATH $($env:PATH + ';C:\Sitecore\Scripts'); `

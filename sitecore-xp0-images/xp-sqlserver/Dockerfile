@@ -51,9 +51,6 @@ RUN $AssetInstallPath = $env:INSTALL_PATH; `
 
 RUN & C:/Scripts/ChangePort-SqlServer.ps1 -SqlPort $env:SQLSERVER_PORT
 
-RUN Stop-Service MSSQLSERVER; `
-    Set-ItemProperty -Path 'HKLM:\software\microsoft\microsoft sql server\mssql14.MSSQLSERVER\mssqlserver\supersocketnetlib\tcp\ipall' -Name tcpport -Value $env:SQLSERVER_PORT;
-
 RUN Remove-Item -Path $env:INSTALL_PATH -Recurse -Force
 
 EXPOSE ${SQLSERVER_PORT}

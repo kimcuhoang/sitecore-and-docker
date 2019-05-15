@@ -12,5 +12,8 @@ if ($SqlPort -ne "1433") {
     $temp = $Instances[0]
     $temp.ServerProtocols['Tcp'].IPAddresses['IPAll'].IPAddressProperties['TcpPort'].Value = "$($SqlPort)"
     $temp.ServerProtocols['Tcp'].Alter()
+
+    Stop-Service MSSQLSERVER
+    Set-ItemProperty -Path 'HKLM:\software\microsoft\microsoft sql server\mssql14.MSSQLSERVER\mssqlserver\supersocketnetlib\tcp\ipall' -Name tcpport -Value $SqlPort
 }
 

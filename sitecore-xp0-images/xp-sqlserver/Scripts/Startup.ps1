@@ -1,6 +1,6 @@
 param (
     [string] $SqlServerHostName,
-    [string] $SqlServerPort,
+    [string] $SqlServerPort = '1433',
     [Parameter(Mandatory = $true)]
     [ValidateScript( {Test-Path $_ -PathType 'Container'})] 
     [string] $FreshDatabasesPath,
@@ -51,6 +51,8 @@ If ($null -eq (Get-ChildItem -Path $DatabasesPath -Filter "*.mdf")) {
         Invoke-Sqlcmd -Query ("UPDATE [{0}_Xdb.Collection.Shard0].[__ShardManagement].[ShardsLocal] SET Port = '{1}'" -f $DatabasePrefix, $SqlServerPort)
         Invoke-Sqlcmd -Query ("UPDATE [{0}_Xdb.Collection.Shard1].[__ShardManagement].[ShardsLocal] SET Port = '{1}'" -f $DatabasePrefix, $SqlServerPort)
     }
+
+
 }
 
 

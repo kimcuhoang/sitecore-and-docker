@@ -1,0 +1,93 @@
+version: '3.5'
+
+services: 
+  sitecore_base:
+    image: sitecore_base:${TAG}
+    build:
+      context: .\xp-base
+      args:
+        SITECORE_ZIP_FILE: ${SITECORE_ZIP_FILE}
+        SIF_VERSION: ${SIF_VERSION}
+  
+  sitecore_base_webserver:
+    image: sitecore_base_webserver:${TAG}
+    build:
+      context: .\xp-base-webserver
+      args:
+        XP_RESOURCE_IMG: sitecore_base
+        XP_RESOURCE_IMG_TAG: ${TAG}
+
+  sitecore_solr:
+    image: sitecore_solr:${TAG}
+    build:
+      context: .\xp-solr
+      args:
+        XP_RESOURCE_IMG: sitecore_base
+        XP_RESOURCE_IMG_TAG: ${TAG}
+    depends_on:
+      - "sitecore_base"
+  
+  sitecore_sqlserver:
+    image: sitecore_sqlserver:${TAG}
+    build:
+      context: .\xp-sqlserver
+      args:
+        XP_RESOURCE_IMG: sitecore_base
+        XP_RESOURCE_IMG_TAG: ${TAG}
+    depends_on:
+      - "sitecore_base"
+  
+  sitecore_identityserver:
+    image: sitecore_identityserver:${TAG}
+    build:
+      context: .\xp-identityserver
+      args:
+        XP_WEBSERVER_IMG: sitecore_base_webserver
+        XP_WEBSERVER_IMG_TAG: ${TAG}
+    depends_on:
+      - "sitecore_base_webserver"
+      - "sitecore_sqlserver"
+
+  sitecore_xconnect:
+    image: sitecore_xconnect:${TAG}
+    build:
+      context: .\xp-xconnect
+      args:
+        XP_WEBSERVER_IMG: sitecore_base_webserver
+        XP_WEBSERVER_IMG_TAG: ${TAG}
+    depends_on:
+      - "sitecore_base_webserver"
+      - "sitecore_sqlserver"
+      - "sitecore_solr"
+
+  sitecore_xconnect_automationengine:
+    image: sitecore_xconnect_automationengine:${TAG}
+    build:
+      context: .\xp-xconnect-automationengine
+    depends_on:
+      - "sitecore_xconnect"
+
+  sitecore_xconnect_indexworker:
+    image: sitecore_xconnect_indexworker:${TAG}
+    build:
+      context: .\xp-xconnect-indexworker
+    depends_on:
+      - "sitecore_xconnect"
+
+  sitecore_xconnect_processingengine:
+    image: sitecore_xconnect_processingengine:${TAG}
+    build:
+      context: .\xp-xconnect-processingengine
+    depends_on:
+      - "sitecore_xconnect"
+
+  sitecore_xp0:
+    image: sitecore_xp0:${TAG}
+    build:
+      context: .\xp0
+      args:
+        XP_WEBSERVER_IMG: sitecore_base_webserver
+        XP_WEBSERVER_IMG_TAG: ${TAG}
+    depends_on:
+      - "sitecore_identityserver"
+      - "sitecore_xconnect"

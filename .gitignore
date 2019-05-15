@@ -4,3 +4,4 @@
 *.msi
 *.pfx
 license.xml
+/run-*

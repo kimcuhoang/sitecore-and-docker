@@ -1,30 +1,32 @@
 param (
-    [string] $SitecoreIdentityServerHostName,
+    [string] $SitecoreInstancePrefix,
     [int] $SitecoreIdentityServerPort,
     [string] $SitecoreIdentityServerClientSecret,
     [string] $CertExportPath,
     [string] $CertExportSecret,
     [string] $SitecoreInstallPath,
-    [string] $SqlServerHostName,
     [string] $SqlServerPort,
-    [string] $DatabasePrefix,
     [string] $SqlAdminUser,
     [string] $SqlAdminSecret,
-    [string] $SitecoreSiteHostName,
     [int] $SitecoreSitePort
 )
 
-& C:\Scripts\Certificates.ps1 -SitecoreIdentityServerHostName $SitecoreIdentityServerHostName `
-                              -CertExportPath $CertExportPath `
-                              -CertExportSecret $CertExportSecret
+$SitecoreSiteHostName = "$($SitecoreInstancePrefix).dev.local"
+$SitecoreIdentityServerHostName = "$($SitecoreInstancePrefix)_identityserver.dev.local"
+$SqlServerHostName = "$($SitecoreInstancePrefix)_sqlserver"
 
-$SitecoreIdentityServerWebRoot = Join-Path -Path "C:\inetpub\wwwroot" -ChildPath "$($SitecoreIdentityServerHostName)"
+& "C:\Scripts\Import-Certificate.ps1" -SitecoreInstancePrefix $SitecoreInstancePrefix `
+                                      -CertExportPath $CertExportPath `
+                                      -CertExportSecret $CertExportSecret
+
+
 $SitecoreIdentityServerUrl = "https://$($SitecoreIdentityServerHostName)"
 
 If ($SitecoreIdentityServerPort -ne 443) {
     $SitecoreIdentityServerUrl = "$($SitecoreIdentityServerUrl):$($SitecoreIdentityServerPort)"
 }
 
+$SitecoreIdentityServerWebRoot = Join-Path -Path "C:\inetpub\wwwroot" -ChildPath "$($SitecoreIdentityServerHostName)"
 $WebConfig = Join-Path -Path $SitecoreIdentityServerWebRoot -ChildPath "web.config"
 
 If (-not (Test-Path -Path $WebConfig)) {
@@ -46,12 +48,12 @@ If (-not (Test-Path -Path $WebConfig)) {
             -Sitename $SitecoreIdentityServerHostName `
             -Port $SitecoreIdentityServerPort `
             -SqlServer $SqlServerHostName `
-            -SqlDbPrefix $DatabasePrefix `
+            -SqlDbPrefix $SitecoreInstancePrefix `
             -SqlCoreUser $SqlAdminUser -SqlCorePassword $SqlAdminSecret `
             -PasswordRecoveryUrl $SitecoreSiteUrl `
             -AllowedCorsOrigins $SitecoreSiteUrl `
             -ClientSecret $SitecoreIdentityServerClientSecret `
-            -SitecoreIdentityCert $SitecoreIdentityServerHostName `
+            -SitecoreIdentityCert $SitecoreInstancePrefix `
             -Skip "CreateHostHeader"
 }
 
@@ -59,5 +61,8 @@ $w3svcService = Get-Service -Name "w3svc"
 If (($null -eq $w3svcService) -or ($w3svcService.Status -ne "Running")) {
     Start-Service w3svc -Verbose
 }
+
+Write-Host "IIS Started..."
+while ($true) { Start-Sleep -Seconds 3600 }
 
 & C:\ServiceMonitor.exe w3svc

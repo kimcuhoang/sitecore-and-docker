@@ -1,41 +1,18 @@
 param (
+    [string] $SitecoreInstancePrefix,
     [string] $SolrHostName,
     [string] $SolrInstallPath,
     [string] $CertExportSecret,
     [string] $CertExportPath
 )
 
-$CertStore = "Cert:\LocalMachine\My"
-
-$CertName = "$($SolrHostName).pfx"
-$certFile = Join-Path -Path $CertExportPath -ChildPath $CertName
-$cert = Get-ChildItem -Path $CertStore | Where-Object { $_.Subject -eq "CN=$($SolrHostName)"}
-$pwd = ConvertTo-SecureString -String $CertExportSecret -Force -AsPlainText
-
-if ($null -eq $cert) {
-    if (Test-Path -Path $certFile) {
-        Import-PfxCertificate -FilePath $certFile -CertStoreLocation 'Cert:\LocalMachine\My' -Password $pwd
-        Import-PfxCertificate -FilePath $certFile -CertStoreLocation 'Cert:\LocalMachine\Root' -Password $pwd
-    } else {
-        $cert = New-SelfSignedCertificate `
-                -CertStoreLocation $CertStore -DnsName $SolrHostName `
-                -KeyExportPolicy Exportable -Provider 'Microsoft Enhanced RSA and AES Cryptographic Provider'
-
-        Export-PfxCertificate -cert $cert -FilePath $certFile -Password $pwd
-        Import-PfxCertificate -FilePath $certFile -CertStoreLocation 'Cert:\LocalMachine\Root' -Password $pwd; 
-    }
-} else {
-    If (-not (Test-Path -Path $certFile)) {
-        Export-PfxCertificate -cert $cert -FilePath $certFile -Password $pwd
-    }
-}
-
+$CertName = "$($SitecoreInstancePrefix).pfx"
+$CertFile = Join-Path -Path $CertExportPath -ChildPath $CertName
 
 $BackupCert = Join-Path -Path "$($SolrInstallPath)\server\etc" -ChildPath $CertName
 If (-not (Test-Path -Path $BackupCert)) {
-    Copy-Item -Path $certFile -Destination $BackupCert
+    Copy-Item -Path $CertFile -Destination $BackupCert
 }
-
 
 If (-not (Test-Path -Path "$($SolrInstallPath)\bin\solr.in.cmd.old")) {
 

@@ -1,13 +1,10 @@
 param (
-    [string] $xConnectHostName,
     [string] $xConnectClientCertName,
     [int] $xConnectSitePort,
-    [string] $SitecoreSolrHostName,
     [string] $SitecoreSolrPort,
     [string] $CertExportPath,
     [string] $CertExportSecret, 
     [string] $SitecoreInstallPath,
-    [string] $SqlServerHostName,
     [string] $SqlServerPort,
     [string] $SqlAdminUser,
     [string] $SqlAdminSecret,
@@ -16,29 +13,18 @@ param (
 
 $ErrorActionPreference = 'Stop'
 
-& C:/Scripts/Certificates.ps1 -Import `
-                              -CertName $SitecoreSolrHostName `
-                              -CertExportPath $CertExportPath `
-                              -CertExportSecret $CertExportSecret
+Write-Host "=======> Import Certificate ..........................."
+& "C:\Scripts\Import-Certificate.ps1" -SitecoreInstancePrefix $SitecoreInstancePrefix `
+                                      -CertExportPath $CertExportPath `
+                                      -CertExportSecret $CertExportSecret
 
-& C:/Scripts/Certificates.ps1 -CertName $xConnectHostName `
-                              -CertExportPath $CertExportPath `
-                              -CertExportSecret $CertExportSecret
-
-& C:/Scripts/Certificates.ps1 -CertName $xConnectClientCertName `
-                              -CertExportPath $CertExportPath `
-                              -CertExportSecret $CertExportSecret
-
+$xConnectHostName = "$($SitecoreInstancePrefix)_xconnect.dev.local"
+$xConnectClientCertName = "$($SitecoreInstancePrefix)_xconnect_client.dev.local"
+$SitecoreSolrHostName = "$($SitecoreInstancePrefix)_solr"
+$SqlServerHostName = "$($SitecoreInstancePrefix)_sqlserver"
 
 $SolrUrl = "https://$($SitecoreSolrHostName):$($SitecoreSolrPort)/solr"
-Write-Host "#### Verifying Solr's Connection: $($SolrUrl)"
-$SolrRequest = [System.Net.WebRequest]::Create($SolrUrl)
-$SolrResponse = $SolrRequest.GetResponse()
-$Status = [int] $SolrResponse.StatusCode
-If ($Status -ne 200) {
-    throw "Could not contact Solr on '$SolrUrl'. Response status was $($Status)"
-} 
-Write-Host "Solr's Connection: $($Status)"
+& "C:\Scripts\Test-Connection.ps1" -ToUrl $SolrUrl
 
 $xConnectWebRoot = Join-Path -Path "C:\inetpub\wwwroot" -ChildPath "$($xConnectHostName)"
 If (-not (Test-Path -Path "$($xConnectWebRoot)\web.config")) {
@@ -55,8 +41,8 @@ If (-not (Test-Path -Path "$($xConnectWebRoot)\web.config")) {
             -Port $xConnectSitePort `
             -SolrUrl $SolrUrl `
             -SolrCorePrefix $SitecoreInstancePrefix `
-            -XConnectCert $xConnectClientCertName `
-            -SSLCert $xConnectHostName `
+            -XConnectCert $SitecoreInstancePrefix `
+            -SSLCert $SitecoreInstancePrefix `
             -SqlServer $SqlServerHostName `
             -SqlDbPrefix $SitecoreInstancePrefix `
             -SqlAdminUser $SqlAdminUser -SqlAdminPassword $SqlAdminSecret `

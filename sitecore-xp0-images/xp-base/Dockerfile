@@ -11,6 +11,7 @@ ARG SIF_VERSION='2.1.0'
 ENV INSTALL_PATH=C:\Install
 
 COPY /Init.ps1 /
+COPY /Scripts /Scripts
 
 RUN C:\Init.ps1 -InstallFolder $env:INSTALL_PATH -SitecoreInstallPackage $env:SITECORE_ZIP_FILE
 

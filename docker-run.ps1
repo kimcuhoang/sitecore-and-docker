@@ -39,7 +39,6 @@ Function Init-Volume-Paths {
     }
 }
 
-
 Function Generate-RunContext {
     param (
         [string] $RunContextPath
@@ -109,6 +108,30 @@ Function Update-Hosts-File {
     }
 }
 
+Function Remove-Host-Names {
+    Write-Host "######### Remove host names .............." -ForegroundColor Yellow
+
+    $IPAddress = "127.0.0.1"
+    $Hosts = @($SitecoreSite, $IdentityServerSite, $xConnectSite, $SqlServerHostName, $SolrHostName)
+    $hostsFile = Join-Path -Path $env:windir -ChildPath "system32\drivers\etc\hosts"
+
+    $Hosts | ForEach-Object {
+        $pattern = '^\s*' + [Regex]::Escape($IPAddress) + '\s*' + [Regex]::Escape($_) + '\s*$'
+        $hostsContent = Get-Content -Path $hostsFile -Encoding UTF8
+        $updatedHostsContent = $hostsContent | Select-String -Pattern $pattern -NotMatch
+
+        if ($null -ne $updatedHostsContent -and @(Compare-Object -ReferenceObject $hostsContent -DifferenceObject $updatedHostsContent).Count -eq 0) {
+            Write-Verbose -Message "No existing host entry found for $IPAddress with hostname '$HostName'"
+            return
+        }
+
+        Set-Content -Path $hostsFile -Value $updatedHostsContent -Encoding UTF8
+        Write-Verbose -Message "Host entry for $IPAddress with hostname '$HostName' has been removed"
+        Start-Sleep 2
+    }
+}
+
+
 Function Import-Certificates {
     Write-Host "######### Import Certificates to $($CertStore)........." -ForegroundColor Yellow
     $CertPath = $SubFolders['Certificates']
@@ -166,6 +189,7 @@ try {
     elseif ($ExecutePostStep) {
         Update-Hosts-File
         Import-Certificates
+        Write-Host "---------> Restart containers ................"
         & docker-compose -f docker-compose.yaml -p "$($SitecoreInstancePrefix)" stop
         & docker-compose -f docker-compose.yaml -p "$($SitecoreInstancePrefix)" start
     }
@@ -178,6 +202,7 @@ try {
     elseif ($Uninstall) {
         & docker-compose -f docker-compose.yaml -p "$($SitecoreInstancePrefix)" down -v
         Remove-Certificates
+        Remove-Host-Names
         Set-Location $CurentPath
         $FoldersToRemove = @($MainHostVolumePath, $RunContextPath)
         $FoldersToRemove | ForEach-Object {

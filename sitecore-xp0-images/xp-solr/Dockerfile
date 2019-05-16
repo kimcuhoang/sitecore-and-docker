@@ -14,10 +14,9 @@ ENV JAVA_HOME=C:\OpenJDK `
     SOLR_PATH=C:\\Solr `
     SOLR_DATA_PATH=C:\SolrData`
     CERT_PATH=C:\Certificates `
-    SOLR_HOST_NAME=sitecore_solr `
     SOLR_PORT=${SOLR_PORT_ARG} `
     CERT_EXPORT_SECRET=secret `
-    SOLR_CORE_PREFIX=sitecore `
+    SITECORE_INSTANCE_PREFIX=sitecore `
     DEFAULT_SOLR_CORE_PREFIX=sitecore
 
 RUN New-Item -Path $env:SIF_CONFIG_PATH -ItemType Directory | Out-Null; `
@@ -58,11 +57,10 @@ COPY /Scripts /Scripts
 
 EXPOSE ${SOLR_PORT}
 
-CMD C:\Scripts\Startup.ps1 -SolrHostName $env:SOLR_HOST_NAME `
-                             -SolrPort $env:SOLR_PORT `
-                             -SolrCertSecret $env:CERT_EXPORT_SECRET `
-                             -SolrInstallPath $env:SOLR_PATH `
-                             -SolrDataPath $env:SOLR_DATA_PATH `
-                             -SolrCorePrefix $env:SOLR_CORE_PREFIX `
-                             -DefaultSolrCorePrefix $env:DEFAULT_SOLR_CORE_PREFIX `
-                             -CertPath $env:CERT_PATH
+CMD C:\Scripts\Startup.ps1 -SolrPort $env:SOLR_PORT `
+                           -SolrCertSecret $env:CERT_EXPORT_SECRET `
+                           -SolrInstallPath $env:SOLR_PATH `
+                           -SolrDataPath $env:SOLR_DATA_PATH `
+                           -DefaultSolrCorePrefix $env:DEFAULT_SOLR_CORE_PREFIX `
+                           -SitecoreInstancePrefix $env:SITECORE_INSTANCE_PREFIX `
+                           -CertPath $env:CERT_PATH

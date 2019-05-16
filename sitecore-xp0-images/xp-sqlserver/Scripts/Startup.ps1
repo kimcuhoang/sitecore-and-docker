@@ -1,5 +1,5 @@
 param (
-    [string] $SqlServerHostName,
+    [string] $SitecoreInstancePrefix,
     [string] $SqlServerPort = '1433',
     [Parameter(Mandatory = $true)]
     [ValidateScript( {Test-Path $_ -PathType 'Container'})] 
@@ -9,9 +9,11 @@ param (
     [string] $DatabasesPath,
     [string] $SASecret,
     [string] $AcceptEula = 'Y',
-    [string] $DatabasePrefix,
     [string] $DefaultDBPrefix
 )
+
+$SqlServerHostName = "$($SitecoreInstancePrefix)_sqlserver"
+$DatabasePrefix = $SitecoreInstancePrefix
 
 If ($null -eq (Get-ChildItem -Path $DatabasesPath -Filter "*.mdf")) {
     Write-Host "### Sitecore databases not found in '$DatabasesPath', seeding clean databases..."

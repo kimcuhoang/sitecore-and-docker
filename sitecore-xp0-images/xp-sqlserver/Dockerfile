@@ -8,14 +8,13 @@ SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPref
 
 ARG SQLSERVER_PORT_ARG=1433
 
-ENV SQLSERVER_HOST_NAME=sitecore_sqlserver`
-    SQLSERVER_PORT=${SQLSERVER_PORT_ARG} `
+ENV SQLSERVER_PORT=${SQLSERVER_PORT_ARG} `
     SA_PASSWORD=Abc@123`
     ACCEPT_EULA='Y'`
     SQLSERVER_DATA_PATH=C:\SitecoreDatabases`
     SQLSERVER_DATA_BACKUP_PATH=C:\Fresh-SitecoreDatabases`
     DEFAULT_DB_PREFIX=sitecore`
-    DATABASE_PREFIX=sitecore
+    SITECORE_INSTANCE_PREFIX=sitecore
 
 RUN New-Item -Path $env:SQLSERVER_DATA_PATH -ItemType Directory | Out-Null; `
     New-Item -Path $env:SQLSERVER_DATA_BACKUP_PATH -ItemType Directory | Out-Null;
@@ -55,11 +54,10 @@ RUN Remove-Item -Path $env:INSTALL_PATH -Recurse -Force
 
 EXPOSE ${SQLSERVER_PORT}
 
-CMD C:\Scripts\Startup.ps1 -SqlServerHostName $env:SQLSERVER_HOST_NAME `
+CMD C:\Scripts\Startup.ps1 -SitecoreInstancePrefix $env:SITECORE_INSTANCE_PREFIX `
                            -SqlServerPort $env:SQLSERVER_PORT `
                            -FreshDatabasesPath $env:SQLSERVER_DATA_BACKUP_PATH `
                            -DatabasesPath $env:SQLSERVER_DATA_PATH `
                            -SASecret $env:SA_PASSWORD `
                            -AcceptEula $env:ACCEPT_EULA `
-                           -DatabasePrefix $env:DATABASE_PREFIX `
                            -DefaultDBPrefix $env:DEFAULT_DB_PREFIX

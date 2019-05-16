@@ -1,7 +1,9 @@
+<#
+The Startup.ps1 script of sitecore_xconnect_automationengine
+#>
 param (
-    [string] $xConnectHostName,
+    [string] $SitecoreInstancePrefix,
     [int] $xConnectPort,
-    [string] $xConnectClientCertName,
     [string] $CertExportPath,
     [string] $CertExportSecret,
     [string] $xConnectAutomationEnginePath,
@@ -10,45 +12,14 @@ param (
 
 $ErrorActionPreference = 'Stop'
 
-Function Import-Certificate {
-    param(
-        [string] $HostName
-    )
+$xConnectHostName = "$($SitecoreInstancePrefix)_xconnect.dev.local"
+$xConnectUrl = "https://$($xConnectHostName):$($xConnectPort)"
 
-    $PfxPath = Join-Path -Path $CertExportPath -ChildPath "$($HostName).pfx"
-    $Secret = ConvertTo-SecureString -String $CertExportSecret -Force -AsPlainText;
-    If (-not (Test-Path -Path $PfxPath)) {
-        throw "Could not find Certificate (*.pfx) of $($HostName)"
-    }
-    @("Cert:\LocalMachine\My", "Cert:\LocalMachine\Root") | ForEach-Object {
-        $CertStore = $_
-        $cert = Get-ChildItem -Path "$($CertStore)" | Where-Object { $_.Subject -eq "CN=$($HostName)"}
+& "C:\Scripts\Import-Certificate.ps1" -SitecoreInstancePrefix $SitecoreInstancePrefix `
+                                      -CertExportPath $CertExportPath `
+                                      -CertExportSecret $CertExportSecret
 
-        If ($null -eq $cert) {
-            Import-PfxCertificate -FilePath $PfxPath -CertStoreLocation $CertStore -Password $Secret;
-        }
-    }
-}
-
-Function Verify-xConnect-Connection {
-    $xConnectUrl = "https://$($xConnectHostName):$($xConnectPort)"
-    Write-Host "#### Verifying xConnect's Connection: $($xConnectUrl)"
-    $request = [System.Net.WebRequest]::Create($xConnectUrl)
-    $response = $request.GetResponse()
-    $StatusCode = [int]$response.StatusCode
-    If ($response.StatusCode -ne 200) {
-        throw "Could not contact Solr on '$xConnectUrl'. Response status was $($StatusCode)"
-    } 
-    Write-Host "xConnect's Connection: $($StatusCode)"
-}
-
-####################################################################################
-####################################################################################
-####################################################################################
-Import-Certificate -HostName $xConnectHostName
-Import-Certificate -HostName $xConnectClientCertName
-
-Verify-xConnect-Connection
+& "C:\Scripts\Test-Connection.ps1" -ToUrl $xConnectUrl
 
 $AutomationEngineJobPath = Join-Path -Path $xConnectJobs -ChildPath "App_Data\jobs\continuous\AutomationEngine"
 If (-not (Test-Path -Path "$($xConnectAutomationEnginePath)\maengine.exe")) {

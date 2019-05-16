@@ -1,19 +1,13 @@
 param (
-    [string] $SitecoreSiteHostName,
     [int] $SitecoreSitePort,
     [string] $SitecoreAdminSecret = "b",
-    [string] $SitecoreIdentityServerHostName,
     [int] $SitecoreIdentityServerPort,
     [string] $SitecoreIdentityServerClientSecret,
-    [string] $xConnectHostName,
-    [string] $xConnectClientCertName,
     [int] $xConnectSitePort,
-    [string] $SitecoreSolrHostName,
     [int] $SitecoreSolrPort,
     [string] $CertExportPath,
     [string] $CertExportSecret, 
     [string] $SitecoreInstallPath,
-    [string] $SqlServerHostName,
     [string] $SqlServerPort,
     [string] $SqlAdminUser,
     [string] $SqlAdminSecret,
@@ -22,25 +16,38 @@ param (
 
 $ErrorActionPreference = 'Stop'
 
-Function Import-Certificates {
-    & C:/Scripts/Certificates.ps1 -CertName $SitecoreSolrHostName `
-                                  -CertExportPath $CertExportPath `
-                                  -CertExportSecret $CertExportSecret
-    
-    & C:/Scripts/Certificates.ps1 -CertName $xConnectHostName `
-                                  -CertExportPath $CertExportPath `
-                                  -CertExportSecret $CertExportSecret
+Write-Host "=======> Import Certificate ..........................."
+& "C:\Scripts\Import-Certificate.ps1" -SitecoreInstancePrefix $SitecoreInstancePrefix `
+                                      -CertExportPath $CertExportPath `
+                                      -CertExportSecret $CertExportSecret
 
-    & C:/Scripts/Certificates.ps1 -CertName $xConnectClientCertName `
-                                  -CertExportPath $CertExportPath `
-                                  -CertExportSecret $CertExportSecret
+$SitecoreSiteHostName = "$($SitecoreInstancePrefix).dev.local"
+$SitecoreIdentityServerHostName = "$($SitecoreInstancePrefix)_identityserver.dev.local"
+$xConnectHostName = "$($SitecoreInstancePrefix)_xconnect.dev.local"
+$SitecoreSolrHostName = "$($SitecoreInstancePrefix)_solr"
+$SqlServerHostName = "$($SitecoreInstancePrefix)_sqlserver"
 
-    & C:/Scripts/Certificates.ps1 -CertName $SitecoreIdentityServerHostName `
-                                  -CertExportPath $CertExportPath `
-                                  -CertExportSecret $CertExportSecret
+$SolrUrl = "https://$($SitecoreSolrHostName):$($SitecoreSolrPort)/solr"
+
+$SitecoreXConnectUrl = "https://$($xConnectHostName):$($xConnectSitePort)"
+
+$SitecoreIdentityServerUrl = "https://$($SitecoreIdentityServerHostName)"
+If ($SitecoreIdentityServerPort -ne 443) {
+    $SitecoreIdentityServerUrl = "$($SitecoreIdentityServerUrl):$($SitecoreIdentityServerPort)"
 }
 
-Function Install-XP0 {
+& "C:\Scripts\Test-Connection.ps1" -ToUrl $SolrUrl
+& "C:\Scripts\Test-Connection.ps1" -ToUrl $SitecoreXConnectUrl
+& "C:\Scripts\Test-Connection.ps1" -ToUrl $SitecoreIdentityServerUrl
+
+$SitecoreWebRoot = Join-Path -Path "C:\inetpub\wwwroot" -ChildPath "$($SitecoreSiteHostName)"
+If (-not (Test-Path -Path "$($SitecoreWebRoot)\web.config")) {
+    
+    $SitecoreSiteUrl = "http://$($SitecoreSiteHostName)"
+    If ($SitecoreSitePort -ne 80) {
+        $SitecoreSiteUrl = "http://$($SitecoreSiteHostName):$($SitecoreSitePort)"
+    }
+
 
     Write-Host "############### Start Installing Sitecore's Instance #############"
     Write-Host "Sitecore's Site: $($SitecoreSiteUrl)"
@@ -71,7 +78,7 @@ Function Install-XP0 {
                                     -SqlReportingUser $SqlAdminUser -SqlReportingPassword $SqlAdminSecret `
                                     -SolrUrl $SolrUrl `
                                     -SolrCorePrefix $SitecoreInstancePrefix `
-                                    -XConnectCert $xConnectClientCertName `
+                                    -XConnectCert $SitecoreInstancePrefix `
                                     -XConnectCollectionService $SitecoreXConnectUrl `
                                     -LicenseFile (Join-Path -Path $SitecoreInstallPath -ChildPath "license.xml") `
                                     -Sitename $SitecoreSiteHostName `
@@ -101,48 +108,7 @@ Function Install-XP0 {
     }
 
     Write-Host "########## Sitecore: $($SitecoreSiteHostName) installed successfully"
-}
 
-Function Verify-Connection {
-    param(
-        [string] $Url
-    )
-
-    Write-Host "#### Verifying Connection to: $($Url)"
-    $request = [System.Net.WebRequest]::Create($Url)
-    $response = $request.GetResponse()
-    $statusCode = [int] $response.StatusCode
-    If ($statusCode -ne 200) {
-        throw "Could not contact on '$Url'. Response status was $($statusCode)"
-    }
-    Write-Host "Connection: $($statusCode)"
-}
-
-#########################################################################################################
-#########################################################################################################
-#########################################################################################################
-Import-Certificates
-
-$SitecoreWebRoot = Join-Path -Path "C:\inetpub\wwwroot" -ChildPath "$($SitecoreSiteHostName)"
-If (-not (Test-Path -Path "$($SitecoreWebRoot)\web.config")) {
-    $SolrUrl = "https://$($SitecoreSolrHostName):$($SitecoreSolrPort)/solr"
-
-    $SitecoreXConnectUrl = "https://$($xConnectHostName):$($xConnectSitePort)"
-
-    $SitecoreIdentityServerUrl = "https://$($SitecoreIdentityServerHostName)"
-    If ($SitecoreIdentityServerPort -ne 443) {
-        $SitecoreIdentityServerUrl = "$($SitecoreIdentityServerUrl):$($SitecoreIdentityServerPort)"
-    }
-
-    $SitecoreSiteUrl = "http://$($SitecoreSiteHostName)"
-    If ($SitecoreSitePort -ne 80) {
-        $SitecoreSiteUrl = "http://$($SitecoreSiteHostName):$($SitecoreSitePort)"
-    }
-
-    Verify-Connection -Url $SolrUrl
-    Verify-Connection -Url $SitecoreXConnectUrl
-
-    Install-XP0
 }
 
 $w3svcService = Get-Service -Name "w3svc"

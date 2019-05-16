@@ -64,6 +64,9 @@ services:
     image: sitecore_xconnect_automationengine:${TAG}
     build:
       context: .\xp-xconnect-automationengine
+      args:
+        XP_RESOURCE_IMG: sitecore_base
+        XP_RESOURCE_IMG_TAG: ${TAG}
     depends_on:
       - "sitecore_xconnect"
 
@@ -71,6 +74,9 @@ services:
     image: sitecore_xconnect_indexworker:${TAG}
     build:
       context: .\xp-xconnect-indexworker
+      args:
+        XP_RESOURCE_IMG: sitecore_base
+        XP_RESOURCE_IMG_TAG: ${TAG}
     depends_on:
       - "sitecore_xconnect"
 
@@ -78,6 +84,9 @@ services:
     image: sitecore_xconnect_processingengine:${TAG}
     build:
       context: .\xp-xconnect-processingengine
+      args:
+        XP_RESOURCE_IMG: sitecore_base
+        XP_RESOURCE_IMG_TAG: ${TAG}
     depends_on:
       - "sitecore_xconnect"
 

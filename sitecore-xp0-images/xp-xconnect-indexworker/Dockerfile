@@ -1,25 +1,27 @@
 # escape=`
 
-FROM mcr.microsoft.com/windows/servercore:ltsc2019
+ARG XP_RESOURCE_IMG
+ARG XP_RESOURCE_IMG_TAG
+
+FROM ${XP_RESOURCE_IMG}:${XP_RESOURCE_IMG_TAG}
 SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
 
 ENV CERT_EXPORT_PATH=C:/Certificates `
     CERT_EXPORT_SECRET=Abc@123 `
-    SITECORE_SOLR_HOST_NAME=sitecore_solr `
     SITECORE_SOLR_PORT=8983 `
-    SITECORE_XCONNECT_HOST_NAME=sitecore_xconnect.dev.local `
     SITECORE_XCONNECT_PORT=444 `
     XCONNECT_JOBS_PATH=C:/xConnectJobs `
-    XCONNECT_INDEX_WORKER_PATH=C:/IndexWorker
+    XCONNECT_INDEX_WORKER_PATH=C:/IndexWorker `
+    SITECORE_INSTANCE_PREFIX=sitecore
 
 RUN New-Item -Path $env:CERT_EXPORT_PATH -ItemType Directory | Out-Null; `
     New-Item -Path $env:XCONNECT_INDEX_WORKER_PATH -ItemType Directory | Out-Null; `
-    New-Item -Path $env:XCONNECT_JOBS_PATH -ItemType Directory | Out-Null; 
+    New-Item -Path $env:XCONNECT_JOBS_PATH -ItemType Directory | Out-Null; `
+    Remove-Item -Path $env:INSTALL_PATH -Recurse -Force;
 
 COPY /Startup.ps1 /
-CMD C:/Startup.ps1 -SitecoreSolrHostName $env:SITECORE_SOLR_HOST_NAME `
+CMD C:/Startup.ps1 -SitecoreInstancePrefix $env:SITECORE_INSTANCE_PREFIX `
                    -SitecoreSolrPort $env:SITECORE_SOLR_PORT `
-                   -xConnectHostName $env:SITECORE_XCONNECT_HOST_NAME `
                    -xConnectPort $env:SITECORE_XCONNECT_PORT `
                    -CertExportPath $env:CERT_EXPORT_PATH `
                    -CertExportSecret $env:CERT_EXPORT_SECRET `

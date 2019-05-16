@@ -1,11 +1,10 @@
 param (
-    [string] $SolrHostName,
     [string] $SolrPort,
     [string] $SolrCertSecret,
     [string] $SolrInstallPath,
     [string] $SolrDataPath,
-    [string] $SolrCorePrefix,
     [string] $DefaultSolrCorePrefix,
+    [string] $SitecoreInstancePrefix,
     [string] $CertPath
 )
 
@@ -26,12 +25,24 @@ Function Update-Hosts-File {
 #########################################################################
 #########################################################################
 
+$SolrHostName = "$($SitecoreInstancePrefix)_solr"
 $SolrUrl = "https://$($SolrHostName):$($SolrPort)/solr"
 
-& "C:\Scripts\Certificates.ps1" -SolrHostName $SolrHostName `
-                                -SolrInstallPath $SolrInstallPath `
-                                -CertExportSecret $SolrCertSecret `
-                                -CertExportPath $CertPath
+Write-Host "=====> Generate Certificate..................."
+& "C:\Scripts\Generate-Certificate.ps1" -SitecoreInstancePrefix $SitecoreInstancePrefix `
+                                        -CertExportPath $CertPath `
+                                        -CertExportSecret $SolrCertSecret
+
+Write-Host "=====> Import Certificate..................."
+& "C:\Scripts\Import-Certificate.ps1" -SitecoreInstancePrefix $SitecoreInstancePrefix `
+                                        -CertExportPath $CertPath `
+                                        -CertExportSecret $SolrCertSecret
+Write-Host "=====> Enable SSL for Solr..................."
+& "C:\Scripts\Enable-Ssl.ps1" -SitecoreInstancePrefix $SitecoreInstancePrefix `
+                              -SolrHostName $SolrHostName `
+                              -SolrInstallPath $SolrInstallPath `
+                              -CertExportSecret $SolrCertSecret `
+                              -CertExportPath $CertPath
 
 Update-Hosts-File -HostName $SolrHostName
 
@@ -42,7 +53,7 @@ If ((Get-ChildItem "$($SolrDataPath)" | Measure-Object).Count -eq 0) {
     Remove-Item -Path "$($SolrDataPath)\*" -Include "write.lock"
 
     Get-ChildItem -Path $($SolrDataPath) -Directory | Where-Object { $_.BaseName -match "$($DefaultSolrCorePrefix)"} | ForEach-Object {
-        $newname = $_.BaseName.Replace("$($DefaultSolrCorePrefix)", "$($SolrCorePrefix)")
+        $newname = $_.BaseName.Replace("$($DefaultSolrCorePrefix)", "$($SitecoreInstancePrefix)")
         $core_properties = Get-Content -Path "$($_.FullName)\core.properties"
         $content = $core_properties | ForEach-Object { $_ -replace 'name=.*?$', "name=$($newname)" }
         $content | Set-Content -Path "$($_.FullName)\core.properties"

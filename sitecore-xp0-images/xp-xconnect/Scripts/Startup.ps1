@@ -1,75 +1,60 @@
 param (
-    [string] $xConnectClientCertName,
-    [int] $xConnectSitePort,
-    [string] $SitecoreSolrPort,
     [string] $CertExportPath,
-    [string] $CertExportSecret, 
     [string] $SitecoreInstallPath,
-    [string] $SqlServerPort,
-    [string] $SqlAdminUser,
-    [string] $SqlAdminSecret,
     [string] $SitecoreInstancePrefix
 )
 
 $ErrorActionPreference = 'Stop'
 
+. "C:\Scripts\Parameters.ps1" -SitecoreInstancePrefix $SitecoreInstancePrefix
+
 Write-Host "=======> Import Certificate ..........................."
 & "C:\Scripts\Import-Certificate.ps1" -SitecoreInstancePrefix $SitecoreInstancePrefix `
                                       -CertExportPath $CertExportPath `
-                                      -CertExportSecret $CertExportSecret
+                                      -CertExportSecret $CertExportPassword
 
-$xConnectHostName = "$($SitecoreInstancePrefix)_xconnect.dev.local"
-$xConnectClientCertName = "$($SitecoreInstancePrefix)_xconnect_client.dev.local"
-$SitecoreSolrHostName = "$($SitecoreInstancePrefix)_solr"
-$SqlServerHostName = "$($SitecoreInstancePrefix)_sqlserver"
-
-$SolrUrl = "https://$($SitecoreSolrHostName):$($SitecoreSolrPort)/solr"
 & "C:\Scripts\Test-Connection.ps1" -ToUrl $SolrUrl
 
-$xConnectWebRoot = Join-Path -Path "C:\inetpub\wwwroot" -ChildPath "$($xConnectHostName)"
+$xConnectWebRoot = Join-Path -Path "C:\inetpub\wwwroot" -ChildPath "$($SitecoreXConnectSite)"
 If (-not (Test-Path -Path "$($xConnectWebRoot)\web.config")) {
-
-    If ($SqlServerPort -ne "1433") {
-        $SqlServerHostName = "$($SqlServerHostName), $($SqlServerPort)"
-    }
 
     Install-SitecoreConfiguration `
             -Path (Join-Path -Path $SitecoreInstallPath -ChildPath 'xconnect-xp0.json') `
             -Package (Join-Path -Path $SitecoreInstallPath -ChildPath 'Sitecore_xp0xconnect.scwdp.zip') `
             -LicenseFile (Join-Path -Path $SitecoreInstallPath -ChildPath 'license.xml') `
-            -Sitename $xConnectHostName `
-            -Port $xConnectSitePort `
+            -Sitename $SitecoreXConnectSite `
+            -Port $SitecoreXConnectSitePort `
             -SolrUrl $SolrUrl `
             -SolrCorePrefix $SitecoreInstancePrefix `
             -XConnectCert $SitecoreInstancePrefix `
             -SSLCert $SitecoreInstancePrefix `
-            -SqlServer $SqlServerHostName `
+            -SqlServer $SqlServerForConnectionString `
             -SqlDbPrefix $SitecoreInstancePrefix `
-            -SqlAdminUser $SqlAdminUser -SqlAdminPassword $SqlAdminSecret `
-            -SqlCollectionUser $SqlAdminUser -SqlCollectionPassword $SqlAdminSecret `
-            -SqlMessagingUser $SqlAdminUser -SqlMessagingPassword $SqlAdminSecret `
-            -SqlProcessingEngineUser $SqlAdminUser -SqlProcessingEnginePassword $SqlAdminSecret `
-            -SqlReportingUser $SqlAdminUser -SqlReportingPassword $SqlAdminSecret `
-            -SqlMarketingAutomationUser $SqlAdminUser -SqlMarketingAutomationPassword $SqlAdminSecret `
-            -SqlReferenceDataUser $SqlAdminUser -SqlReferenceDataPassword $SqlAdminSecret `
-            -SqlProcessingPoolsUser $SqlAdminUser -SqlProcessingPoolsPassword $SqlAdminSecret `
+            -SqlAdminUser $SqlServerAdminUser -SqlAdminPassword $SqlServerAdminPassword `
+            -SqlCollectionUser $SqlServerAdminUser -SqlCollectionPassword $SqlServerAdminPassword `
+            -SqlMessagingUser $SqlServerAdminUser -SqlMessagingPassword $SqlServerAdminPassword `
+            -SqlProcessingEngineUser $SqlServerAdminUser -SqlProcessingEnginePassword $SqlServerAdminPassword `
+            -SqlReportingUser $SqlServerAdminUser -SqlReportingPassword $SqlServerAdminPassword `
+            -SqlMarketingAutomationUser $SqlServerAdminUser -SqlMarketingAutomationPassword $SqlServerAdminPassword `
+            -SqlReferenceDataUser $SqlServerAdminUser -SqlReferenceDataPassword $SqlServerAdminPassword `
+            -SqlProcessingPoolsUser $SqlServerAdminUser -SqlProcessingPoolsPassword $SqlServerAdminPassword `
             -Skip "StopServices", "RemoveServices", "CleanShards", "CreateShards", "CreateShardApplicationDatabaseServerLoginSqlCmd", "CreateShardManagerApplicationDatabaseUserSqlCmd", "CreateShard0ApplicationDatabaseUserSqlCmd", "CreateShard1ApplicationDatabaseUserSqlCmd", "InstallServices", "StartServices"
 
-    Set-WebConfiguration -PSPath ('IIS:\Sites\{0}' -f $xConnectHostName) -Filter '/system.web/customErrors/@mode' -Value 'Off';
+    Set-WebConfiguration -PSPath ('IIS:\Sites\{0}' -f $SitecoreXConnectSite) -Filter '/system.web/customErrors/@mode' -Value 'Off';
     
     try {
-        Add-LocalGroupMember -Group 'Performance Monitor Users' -Member ('IIS AppPool\{0}' -f $xConnectHostName);
+        Add-LocalGroupMember -Group 'Performance Monitor Users' -Member ('IIS AppPool\{0}' -f $SitecoreXConnectSite);
     } catch {
-        Write-Host "Warning: Couldn't add IIS AppPool\$($xConnectHostName) to Performance Monitor Users -- user may already exist" -ForegroundColor Yellow
+        Write-Host "Warning: Couldn't add IIS AppPool\$($SitecoreXConnectSite) to Performance Monitor Users -- user may already exist" -ForegroundColor Yellow
     }
 
     try {
-        Add-LocalGroupMember -Group "Performance Log Users" -Member ('IIS AppPool\{0}' -f $xConnectHostName)
+        Add-LocalGroupMember -Group "Performance Log Users" -Member ('IIS AppPool\{0}' -f $SitecoreXConnectSite)
     } catch {
-        Write-Host "Warning: Couldn't add IIS AppPool\$($xConnectHostName) to Performance Log Users -- user may already exist" -ForegroundColor Yellow
+        Write-Host "Warning: Couldn't add IIS AppPool\$($SitecoreXConnectSite) to Performance Log Users -- user may already exist" -ForegroundColor Yellow
     }
 
-    Write-Host "########## xConnect: $($xConnectHostName) installed successfully"
+    Write-Host "########## xConnect: $($SitecoreXConnectSite) installed successfully"
 }
 
 $w3svcService = Get-Service -Name "w3svc"

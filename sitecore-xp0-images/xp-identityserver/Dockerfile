@@ -10,16 +10,10 @@ RUN Start-Process (Join-Path $env:INSTALL_PATH '\\dotnet-hosting-2.1.3-win.exe')
 
 ARG SITECORE_IDENTITYSERVER_PORT_ARG=443
 
-ENV SITECORE_INSTANCE_PREFIX=sitecore `
-    SITECORE_IDENTITYSERVER_PORT=${SITECORE_IDENTITYSERVER_PORT_ARG} `
-    SITECORE_IDENTITYSERVER_CLIENT_SECRET=Abc@123 `
-    CERT_EXPORT_SECRET=secret `
+ENV SITECORE_IDENTITYSERVER_PORT=${SITECORE_IDENTITYSERVER_PORT_ARG} `
     CERT_EXPORT_PATH=C:\Certificates `
     SITECORE_INSTALL_PATH=C:\SitecoreInstall `
-    SQLSERVER_PORT=1433 `
-    SQL_ADMIN_USER=sa `
-    SQL_ADMIN_SECRET=Abc@123 `
-    SITECORE_SITE_PORT=80
+    SITECORE_INSTANCE_PREFIX=sitecore
 
 RUN New-Item -Path $env:CERT_EXPORT_PATH -ItemType Directory | Out-Null; `
     New-Item -Path $env:SITECORE_INSTALL_PATH -ItemType Directory | Out-Null; `
@@ -42,12 +36,5 @@ EXPOSE ${SITECORE_IDENTITYSERVER_PORT}
 COPY /Scripts /Scripts
 
 CMD & C:\Scripts\Startup.ps1 -SitecoreInstancePrefix $env:SITECORE_INSTANCE_PREFIX `
-                             -SitecoreIdentityServerPort $env:SITECORE_IDENTITYSERVER_PORT `
-                             -SitecoreIdentityServerClientSecret $env:SITECORE_IDENTITYSERVER_CLIENT_SECRET `
                              -CertExportPath $env:CERT_EXPORT_PATH `
-                             -CertExportSecret $env:CERT_EXPORT_SECRET `
-                             -SitecoreInstallPath $env:SITECORE_INSTALL_PATH `
-                             -SqlServerPort $env:SQLSERVER_PORT `
-                             -SqlAdminUser $env:SQL_ADMIN_USER `
-                             -SqlAdminSecret $env:SQL_ADMIN_SECRET `
-                             -SitecoreSitePort $env:SITECORE_SITE_PORT
+                             -SitecoreInstallPath $env:SITECORE_INSTALL_PATH

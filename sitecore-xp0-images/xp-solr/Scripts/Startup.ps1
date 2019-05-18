@@ -1,10 +1,8 @@
 param (
-    [string] $SolrPort,
-    [string] $SolrCertSecret,
+    [string] $SitecoreInstancePrefix,
     [string] $SolrInstallPath,
     [string] $SolrDataPath,
     [string] $DefaultSolrCorePrefix,
-    [string] $SitecoreInstancePrefix,
     [string] $CertPath
 )
 
@@ -25,23 +23,22 @@ Function Update-Hosts-File {
 #########################################################################
 #########################################################################
 
-$SolrHostName = "$($SitecoreInstancePrefix)_solr"
-$SolrUrl = "https://$($SolrHostName):$($SolrPort)/solr"
+. "C:\Scripts\Parameters.ps1" -SitecoreInstancePrefix $SitecoreInstancePrefix
 
 Write-Host "=====> Generate Certificate..................."
 & "C:\Scripts\Generate-Certificate.ps1" -SitecoreInstancePrefix $SitecoreInstancePrefix `
                                         -CertExportPath $CertPath `
-                                        -CertExportSecret $SolrCertSecret
+                                        -CertExportSecret $CertExportPassword
 
 Write-Host "=====> Import Certificate..................."
 & "C:\Scripts\Import-Certificate.ps1" -SitecoreInstancePrefix $SitecoreInstancePrefix `
                                         -CertExportPath $CertPath `
-                                        -CertExportSecret $SolrCertSecret
+                                        -CertExportSecret $CertExportPassword
 Write-Host "=====> Enable SSL for Solr..................."
 & "C:\Scripts\Enable-Ssl.ps1" -SitecoreInstancePrefix $SitecoreInstancePrefix `
                               -SolrHostName $SolrHostName `
                               -SolrInstallPath $SolrInstallPath `
-                              -CertExportSecret $SolrCertSecret `
+                              -CertExportSecret $CertExportPassword `
                               -CertExportPath $CertPath
 
 Update-Hosts-File -HostName $SolrHostName

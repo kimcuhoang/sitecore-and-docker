@@ -11,13 +11,15 @@ ARG SQLSERVER_PORT_ARG=1433
 ENV SQLSERVER_PORT=${SQLSERVER_PORT_ARG} `
     SA_PASSWORD=Abc@123`
     ACCEPT_EULA='Y'`
+    CERT_EXPORT_PATH=C:\Certificates `
     SQLSERVER_DATA_PATH=C:\SitecoreDatabases`
     SQLSERVER_DATA_BACKUP_PATH=C:\Fresh-SitecoreDatabases`
-    DEFAULT_DB_PREFIX=sitecore`
+    DEFAULT_DB_PREFIX=sitecore `
     SITECORE_INSTANCE_PREFIX=sitecore
 
 RUN New-Item -Path $env:SQLSERVER_DATA_PATH -ItemType Directory | Out-Null; `
-    New-Item -Path $env:SQLSERVER_DATA_BACKUP_PATH -ItemType Directory | Out-Null;
+    New-Item -Path $env:SQLSERVER_DATA_BACKUP_PATH -ItemType Directory | Out-Null; `
+    New-Item -Path $env:CERT_EXPORT_PATH -ItemType Directory | Out-Null;
 
 ### Install SqlServer
 RUN Start-Process -Wait -FilePath ('{0}\{1}' -f $env:INSTALL_PATH,'SQLServer2017-DEV-x64-ENU.exe') -ArgumentList /qs, /x:setup; `
@@ -38,15 +40,13 @@ COPY /Scripts /Scripts
 RUN $AssetInstallPath = $env:INSTALL_PATH; `
     $FreshDatabasesPath = $env:SQLSERVER_DATA_BACKUP_PATH;`
     $DatabasePrefix = $env:DEFAULT_DB_PREFIX; `
-    $SqlServerHostName = $env:SQLSERVER_HOST_NAME; `
     & C:\Scripts\Extract-Databases.ps1 -AssetInstallPath $AssetInstallPath; `
     & C:\Scripts\Install-Databases.ps1 -AssetInstallPath $AssetInstallPath `
                                        -DatabasesPath $FreshDatabasesPath `
                                        -DatabasePrefix $DatabasePrefix; `
     & C:\Scripts\Install-Shards.ps1 -AssetInstallPath $AssetInstallPath `
                                     -DatabasesPath $FreshDatabasesPath `
-                                    -DatabasePrefix $DatabasePrefix `
-                                    -SqlServerHostName $SqlServerHostName;
+                                    -DatabasePrefix $DatabasePrefix
 
 RUN & C:/Scripts/ChangePort-SqlServer.ps1 -SqlPort $env:SQLSERVER_PORT
 
@@ -55,9 +55,7 @@ RUN Remove-Item -Path $env:INSTALL_PATH -Recurse -Force
 EXPOSE ${SQLSERVER_PORT}
 
 CMD C:\Scripts\Startup.ps1 -SitecoreInstancePrefix $env:SITECORE_INSTANCE_PREFIX `
-                           -SqlServerPort $env:SQLSERVER_PORT `
                            -FreshDatabasesPath $env:SQLSERVER_DATA_BACKUP_PATH `
                            -DatabasesPath $env:SQLSERVER_DATA_PATH `
-                           -SASecret $env:SA_PASSWORD `
                            -AcceptEula $env:ACCEPT_EULA `
                            -DefaultDBPrefix $env:DEFAULT_DB_PREFIX

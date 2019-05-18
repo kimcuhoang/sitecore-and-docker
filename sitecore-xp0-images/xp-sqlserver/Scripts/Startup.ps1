@@ -1,18 +1,17 @@
 param (
     [string] $SitecoreInstancePrefix,
-    [string] $SqlServerPort = '1433',
     [Parameter(Mandatory = $true)]
     [ValidateScript( {Test-Path $_ -PathType 'Container'})] 
     [string] $FreshDatabasesPath,
     [Parameter(Mandatory = $true)]
     [ValidateScript( {Test-Path $_ -PathType 'Container'})] 
     [string] $DatabasesPath,
-    [string] $SASecret,
     [string] $AcceptEula = 'Y',
     [string] $DefaultDBPrefix
 )
 
-$SqlServerHostName = "$($SitecoreInstancePrefix)_sqlserver"
+. "C:\Scripts\Parameters.ps1" -SitecoreInstancePrefix $SitecoreInstancePrefix
+
 $DatabasePrefix = $SitecoreInstancePrefix
 
 If ($null -eq (Get-ChildItem -Path $DatabasesPath -Filter "*.mdf")) {
@@ -61,6 +60,6 @@ If ($null -eq (Get-ChildItem -Path $DatabasesPath -Filter "*.mdf")) {
 Write-Host "### Sitecore databases ready!"
 
 # Call Start.ps1 from the base image https://github.com/Microsoft/mssql-docker/blob/master/windows/mssql-server-windows-developer/dockerfile
-& C:\Scripts\Start-SqlServer.ps1 -sa_password $SASecret `
+& C:\Scripts\Start-SqlServer.ps1 -sa_password $SqlServerAdminPassword `
                                  -ACCEPT_EULA $AcceptEula `
                                  -attach_dbs "[]" -Verbose

@@ -6,8 +6,6 @@ services:
     container_name: ${SITECORE_INSTANCE_PREFIX}_solr
     environment:
       SITECORE_INSTANCE_PREFIX: ${SITECORE_INSTANCE_PREFIX}
-      SOLR_PORT: 8983
-      CERT_EXPORT_SECRET: ${CERT_EXPORT_PASSWORD}
     ports:
       - ${SOLR_PORT}:8983
     volumes:
@@ -16,17 +14,15 @@ services:
     restart: on-failure
     networks: 
       - SITECORE_NETWORK
-  
+
   sitecore_sqlserver:
     image: sitecore_sqlserver:${TAG}
     container_name: ${SITECORE_INSTANCE_PREFIX}_sqlserver
     environment:
       SITECORE_INSTANCE_PREFIX: ${SITECORE_INSTANCE_PREFIX}
-      SA_PASSWORD: ${SA_PASSWORD}
-      SQLSERVER_PORT: 1433
-      CERT_EXPORT_SECRET: ${CERT_EXPORT_PASSWORD}
     volumes:
       - ${HOST_SQLSERVER_DATA_PATH}:C:\SitecoreDatabases
+      - ${HOST_CERTIFICATE_PATH}:C:/Certificates
     ports:
       - ${SQL_PORT}:1433
     restart: on-failure
@@ -38,12 +34,6 @@ services:
     container_name: ${SITECORE_INSTANCE_PREFIX}_identityserver.dev.local
     environment:
       SITECORE_INSTANCE_PREFIX: ${SITECORE_INSTANCE_PREFIX}
-      SITECORE_IDENTITYSERVER_PORT: ${IDENTITYSERVER_PORT}
-      SITECORE_IDENTITYSERVER_CLIENT_SECRET: ${SITECORE_IDENTITYSERVER_CLIENT_SECRET}
-      CERT_EXPORT_SECRET: ${CERT_EXPORT_PASSWORD}
-      SQLSERVER_PORT: 1433
-      SQL_ADMIN_SECRET: ${SA_PASSWORD}
-      SITECORE_SITE_PORT: ${SITECORE_SITE_PORT}
     ports:
       - ${IDENTITYSERVER_PORT}:${IDENTITYSERVER_PORT}
     volumes:
@@ -59,11 +49,6 @@ services:
     image: sitecore_xconnect:${TAG}
     container_name: ${SITECORE_INSTANCE_PREFIX}_xconnect.dev.local
     environment:
-      SITECORE_XCONNECT_PORT: ${XCONNECT_PORT}
-      CERT_EXPORT_SECRET: ${CERT_EXPORT_PASSWORD}
-      SITECORE_SOLR_PORT: 8983
-      SQLSERVER_PORT: 1433
-      SQL_ADMIN_SECRET: ${SA_PASSWORD}
       SITECORE_INSTANCE_PREFIX: ${SITECORE_INSTANCE_PREFIX}
     ports:
       - ${XCONNECT_PORT}:${XCONNECT_PORT}
@@ -76,14 +61,12 @@ services:
     depends_on:
       - "sitecore_sqlserver"
       - "sitecore_solr"
-
+  
   sitecore_xconnect_automationengine:
     image: sitecore_xconnect_automationengine:${TAG}
     container_name: ${SITECORE_INSTANCE_PREFIX}_xconnect_automationengine
     environment:
       SITECORE_INSTANCE_PREFIX: ${SITECORE_INSTANCE_PREFIX}
-      SITECORE_XCONNECT_PORT: ${XCONNECT_PORT}
-      CERT_EXPORT_SECRET: ${CERT_EXPORT_PASSWORD}
     volumes:
       - ${HOST_XCONNECT_WEBROOT}:C:\xConnectJobs
       - ${HOST_XCONNECT_AUTOMATION_ENGINE}:C:/AutomationEngine
@@ -99,9 +82,6 @@ services:
     container_name: ${SITECORE_INSTANCE_PREFIX}_xconnect_indexworker
     environment:
       SITECORE_INSTANCE_PREFIX: ${SITECORE_INSTANCE_PREFIX}
-      SITECORE_SOLR_PORT: 8983
-      SITECORE_XCONNECT_PORT: ${XCONNECT_PORT}
-      CERT_EXPORT_SECRET: ${CERT_EXPORT_PASSWORD}
     volumes:
       - ${HOST_XCONNECT_WEBROOT}:C:\xConnectJobs
       - ${HOST_XCONNECT_INDEX_WORKER}:C:/IndexWorker
@@ -117,8 +97,6 @@ services:
     container_name: ${SITECORE_INSTANCE_PREFIX}_xconnect_processingengine
     environment:
       SITECORE_INSTANCE_PREFIX: ${SITECORE_INSTANCE_PREFIX}
-      SITECORE_XCONNECT_PORT: ${XCONNECT_PORT}
-      CERT_EXPORT_SECRET: ${CERT_EXPORT_PASSWORD}
     volumes:
       - ${HOST_XCONNECT_WEBROOT}:C:\xConnectJobs
       - ${HOST_XCONNECT_PROCESSING_ENGINE}:C:/ProcessingEngine
@@ -128,21 +106,12 @@ services:
       - SITECORE_NETWORK
     depends_on:
       - "sitecore_xconnect"
-
+  
   sitecore_xp0:
     image: sitecore_xp0:${TAG}
     container_name: ${SITECORE_INSTANCE_PREFIX}.dev.local
     environment:
       SITECORE_INSTANCE_PREFIX: ${SITECORE_INSTANCE_PREFIX}
-      SITECORE_SITE_PORT: ${SITECORE_SITE_PORT}
-      SITECORE_ADMIN_SECRET: 'b'
-      SITECORE_IDENTITYSERVER_PORT: ${IDENTITYSERVER_PORT}
-      SITECORE_IDENTITYSERVER_CLIENT_SECRET: ${SITECORE_IDENTITYSERVER_CLIENT_SECRET}
-      SITECORE_XCONNECT_PORT: ${XCONNECT_PORT}
-      CERT_EXPORT_SECRET: ${CERT_EXPORT_PASSWORD}
-      SITECORE_SOLR_PORT: 8983
-      SQLSERVER_PORT: 1433
-      SQL_ADMIN_SECRET: ${SA_PASSWORD}
     ports:
       - ${SITECORE_SITE_PORT}:${SITECORE_SITE_PORT}
     volumes:

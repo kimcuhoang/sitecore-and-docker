@@ -2,21 +2,18 @@ param (
     [string] $xConnectJobsPath,
     [string] $xConnectProcessingEnginePath,
     [string] $SitecoreInstancePrefix,
-    [int] $xConnectPort,
-    [string] $CertExportPath,
-    [string] $CertExportSecret
+    [string] $CertExportPath
 )
 
 $ErrorActionPreference = 'Stop'
 
-$xConnectHostName = "$($SitecoreInstancePrefix)_xconnect.dev.local"
-$xConnectUrl = "https://$($xConnectHostName):$($xConnectPort)"
+. "C:\Scripts\Parameters.ps1" -SitecoreInstancePrefix $SitecoreInstancePrefix
 
 & "C:\Scripts\Import-Certificate.ps1" -SitecoreInstancePrefix $SitecoreInstancePrefix `
                                       -CertExportPath $CertExportPath `
-                                      -CertExportSecret $CertExportSecret
+                                      -CertExportSecret $CertExportPassword
 
-& "C:\Scripts\Test-Connection.ps1" -ToUrl $xConnectUrl
+& "C:\Scripts\Test-Connection.ps1" -ToUrl $SitecoreXConnectSiteUrl
 
 $ProcessingEngineJobPath = Join-Path -Path $xConnectJobsPath -ChildPath "App_Data\jobs\continuous\ProcessingEngine"
 If (-not (Test-Path -Path "$($xConnectProcessingEnginePath)\Sitecore.ProcessingEngine.exe")) {

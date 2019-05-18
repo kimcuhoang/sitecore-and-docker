@@ -8,8 +8,7 @@ param(
     [string] $DatabasesPath,
     [Parameter(Mandatory = $true)]
     [ValidateNotNullOrEmpty()] 
-    [string] $DatabasePrefix,
-    [string] $SqlServerHostName
+    [string] $DatabasePrefix
 )
 
 $shardToolPath = "c:\shardtool"

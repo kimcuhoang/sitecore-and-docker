@@ -9,9 +9,7 @@ SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPref
 ENV XCONNECT_JOBS_PATH=C:/xConnectJobs `
     XCONNECT_PROCESSING_ENGINE_PATH=C:/ProcessingEngine `
     SITECORE_INSTANCE_PREFIX=sitecore `
-    SITECORE_XCONNECT_PORT=444 `
-    CERT_EXPORT_PATH=C:/Certificates `
-    CERT_EXPORT_SECRET=Abc@123
+    CERT_EXPORT_PATH=C:/Certificates
 
 RUN New-Item -Path $env:XCONNECT_PROCESSING_ENGINE_PATH -ItemType Directory | Out-Null; `
     New-Item -Path $env:XCONNECT_JOBS_PATH -ItemType Directory | Out-Null; `
@@ -23,6 +21,4 @@ COPY /Startup.ps1 /
 CMD C:/Startup.ps1 -xConnectJobsPath $env:XCONNECT_JOBS_PATH `
                    -xConnectProcessingEnginePath $env:XCONNECT_PROCESSING_ENGINE_PATH`
                    -SitecoreInstancePrefix $env:SITECORE_INSTANCE_PREFIX `
-                   -xConnectPort $env:SITECORE_XCONNECT_PORT `
-                   -CertExportPath $env:CERT_EXPORT_PATH `
-                   -CertExportSecret $env:CERT_EXPORT_SECRET
+                   -CertExportPath $env:CERT_EXPORT_PATH

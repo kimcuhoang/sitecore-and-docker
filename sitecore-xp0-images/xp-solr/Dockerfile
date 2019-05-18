@@ -38,15 +38,15 @@ RUN Expand-Archive -Path ('{0}\{1}' -f $env:INSTALL_PATH,'solr-*.zip') -Destinat
 
 RUN Remove-Item -Path $env:INSTALL_PATH -Recurse -Force;
 
-RUN & ('{0}\bin\solr.cmd' -f $env:SOLR_PATH) start -port $env:SOLR_PORT; `
+RUN & ('{0}\bin\solr.cmd' -f $env:SOLR_PATH) start -port $env:SOLR_PORT_ARG; `
     Install-SitecoreConfiguration -Path ('{0}\sitecore-solr.json' -f $env:SIF_CONFIG_PATH) `
-                                    -SolrUrl ('http://localhost:{0}/solr' -f $env:SOLR_PORT) `
+                                    -SolrUrl ('http://localhost:{0}/solr' -f $env:SOLR_PORT_ARG) `
                                     -SolrRoot $env:SOLR_PATH `
                                     -SolrService "void" `
                                     -CorePrefix $env:DEFAULT_SOLR_CORE_PREFIX `
                                     -Skip "StopSolr", "StartSolr"; `
     Install-SitecoreConfiguration -Path ('{0}\xconnect-solr.json' -f $env:SIF_CONFIG_PATH) `
-                                   -SolrUrl ('http://localhost:{0}/solr' -f $env:SOLR_PORT) `
+                                   -SolrUrl ('http://localhost:{0}/solr' -f $env:SOLR_PORT_ARG) `
                                     -SolrRoot $env:SOLR_PATH `
                                     -SolrService "void" `
                                     -CorePrefix $env:DEFAULT_SOLR_CORE_PREFIX `
@@ -57,10 +57,8 @@ COPY /Scripts /Scripts
 
 EXPOSE ${SOLR_PORT}
 
-CMD C:\Scripts\Startup.ps1 -SolrPort $env:SOLR_PORT `
-                           -SolrCertSecret $env:CERT_EXPORT_SECRET `
+CMD C:\Scripts\Startup.ps1 -SitecoreInstancePrefix $env:SITECORE_INSTANCE_PREFIX `
                            -SolrInstallPath $env:SOLR_PATH `
                            -SolrDataPath $env:SOLR_DATA_PATH `
                            -DefaultSolrCorePrefix $env:DEFAULT_SOLR_CORE_PREFIX `
-                           -SitecoreInstancePrefix $env:SITECORE_INSTANCE_PREFIX `
                            -CertPath $env:CERT_PATH

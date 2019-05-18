@@ -10,12 +10,7 @@ ARG SITECORE_XCONNECT_PORT_ARG=444
 
 ENV SITECORE_XCONNECT_PORT=${SITECORE_XCONNECT_PORT_ARG} `
     CERT_EXPORT_PATH=C:\Certificates `
-    CERT_EXPORT_SECRET=secret `
-    SITECORE_SOLR_PORT=8983 `
     SITECORE_INSTALL_PATH=C:\SitecoreInstall `
-    SQLSERVER_PORT=1433 `
-    SQL_ADMIN_USER=sa `
-    SQL_ADMIN_SECRET=Abc@123 `
     SITECORE_INSTANCE_PREFIX=sitecore
 
 RUN New-Item -Path $env:CERT_EXPORT_PATH -ItemType Directory | Out-Null; `
@@ -44,12 +39,6 @@ COPY /Scripts /Scripts
 
 EXPOSE ${SITECORE_XCONNECT_PORT}
 
-CMD C:\Scripts\Startup.ps1 -xConnectSitePort $env:SITECORE_XCONNECT_PORT `
-                           -SitecoreSolrPort $env:SITECORE_SOLR_PORT `
-                           -CertExportPath $env:CERT_EXPORT_PATH `
-                           -CertExportSecret $env:CERT_EXPORT_SECRET `
+CMD C:\Scripts\Startup.ps1 -CertExportPath $env:CERT_EXPORT_PATH `
                            -SitecoreInstallPath $env:SITECORE_INSTALL_PATH `
-                           -SqlServerPort $env:SQLSERVER_PORT `
-                           -SqlAdminUser $env:SQL_ADMIN_USER `
-                           -SqlAdminSecret $env:SQL_ADMIN_SECRET `
                            -SitecoreInstancePrefix $env:SITECORE_INSTANCE_PREFIX

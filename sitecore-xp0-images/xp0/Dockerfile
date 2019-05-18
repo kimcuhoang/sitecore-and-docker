@@ -9,17 +9,8 @@ SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPref
 ARG SITECORE_SITE_PORT_ARG=80
 
 ENV SITECORE_SITE_PORT=${SITECORE_SITE_PORT_ARG} `
-    SITECORE_ADMIN_SECRET='b' `
-    SITECORE_IDENTITYSERVER_PORT=443 `
-    SITECORE_IDENTITYSERVER_CLIENT_SECRET=Abc@123 `
-    SITECORE_XCONNECT_PORT=444 `
     CERT_EXPORT_PATH=C:\Certificates `
-    CERT_EXPORT_SECRET=secret `
-    SITECORE_SOLR_PORT=8983 `
     SITECORE_INSTALL_PATH=C:\SitecoreInstall `
-    SQLSERVER_PORT=1433 `
-    SQL_ADMIN_USER=sa `
-    SQL_ADMIN_SECRET=Abc@123 `
     SITECORE_INSTANCE_PREFIX=sitecore `
     SITECORE_PROJECT_SRC=C:\SitecoreProjectSource
 
@@ -50,16 +41,6 @@ COPY /Scripts /Scripts
 
 EXPOSE ${SITECORE_SITE_PORT} 4022 4023
 
-CMD C:\Scripts\Startup.ps1 -SitecoreSitePort $env:SITECORE_SITE_PORT `
-                             -SitecoreAdminSecret $env:SITECORE_ADMIN_SECRET `
-                             -SitecoreIdentityServerPort $env:SITECORE_IDENTITYSERVER_PORT `
-                             -SitecoreIdentityServerClientSecret $env:SITECORE_IDENTITYSERVER_CLIENT_SECRET `
-                             -xConnectSitePort $env:SITECORE_XCONNECT_PORT `
-                             -SitecoreSolrPort $env:SITECORE_SOLR_PORT `
-                             -CertExportPath $env:CERT_EXPORT_PATH `
-                             -CertExportSecret $env:CERT_EXPORT_SECRET `
+CMD C:\Scripts\Startup.ps1 -CertExportPath $env:CERT_EXPORT_PATH `
                              -SitecoreInstallPath $env:SITECORE_INSTALL_PATH `
-                             -SqlServerPort $env:SQLSERVER_PORT `
-                             -SqlAdminUser $env:SQL_ADMIN_USER `
-                             -SqlAdminSecret $env:SQL_ADMIN_SECRET `
                              -SitecoreInstancePrefix $env:SITECORE_INSTANCE_PREFIX

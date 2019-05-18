@@ -1,67 +1,37 @@
 param (
-    [int] $SitecoreSitePort,
-    [string] $SitecoreAdminSecret = "b",
-    [int] $SitecoreIdentityServerPort,
-    [string] $SitecoreIdentityServerClientSecret,
-    [int] $xConnectSitePort,
-    [int] $SitecoreSolrPort,
     [string] $CertExportPath,
-    [string] $CertExportSecret, 
     [string] $SitecoreInstallPath,
-    [string] $SqlServerPort,
-    [string] $SqlAdminUser,
-    [string] $SqlAdminSecret,
     [string] $SitecoreInstancePrefix
 )
 
 $ErrorActionPreference = 'Stop'
 
+. "C:\Scripts\Parameters.ps1" -SitecoreInstancePrefix $SitecoreInstancePrefix
+
 Write-Host "=======> Import Certificate ..........................."
 & "C:\Scripts\Import-Certificate.ps1" -SitecoreInstancePrefix $SitecoreInstancePrefix `
                                       -CertExportPath $CertExportPath `
-                                      -CertExportSecret $CertExportSecret
-
-$SitecoreSiteHostName = "$($SitecoreInstancePrefix).dev.local"
-$SitecoreIdentityServerHostName = "$($SitecoreInstancePrefix)_identityserver.dev.local"
-$xConnectHostName = "$($SitecoreInstancePrefix)_xconnect.dev.local"
-$SitecoreSolrHostName = "$($SitecoreInstancePrefix)_solr"
-$SqlServerHostName = "$($SitecoreInstancePrefix)_sqlserver"
-
-$SolrUrl = "https://$($SitecoreSolrHostName):$($SitecoreSolrPort)/solr"
-
-$SitecoreXConnectUrl = "https://$($xConnectHostName):$($xConnectSitePort)"
-
-$SitecoreIdentityServerUrl = "https://$($SitecoreIdentityServerHostName)"
-If ($SitecoreIdentityServerPort -ne 443) {
-    $SitecoreIdentityServerUrl = "$($SitecoreIdentityServerUrl):$($SitecoreIdentityServerPort)"
-}
+                                      -CertExportSecret $CertExportPassword
 
 & "C:\Scripts\Test-Connection.ps1" -ToUrl $SolrUrl
-& "C:\Scripts\Test-Connection.ps1" -ToUrl $SitecoreXConnectUrl
-& "C:\Scripts\Test-Connection.ps1" -ToUrl $SitecoreIdentityServerUrl
+& "C:\Scripts\Test-Connection.ps1" -ToUrl $SitecoreXConnectSiteUrl
+& "C:\Scripts\Test-Connection.ps1" -ToUrl $SitecoreIdentityServerSiteUrl
 
-$SitecoreWebRoot = Join-Path -Path "C:\inetpub\wwwroot" -ChildPath "$($SitecoreSiteHostName)"
+$SitecoreWebRoot = Join-Path -Path "C:\inetpub\wwwroot" -ChildPath "$($SitecoreSite)"
 If (-not (Test-Path -Path "$($SitecoreWebRoot)\web.config")) {
     
-    $SitecoreSiteUrl = "http://$($SitecoreSiteHostName)"
-    If ($SitecoreSitePort -ne 80) {
-        $SitecoreSiteUrl = "http://$($SitecoreSiteHostName):$($SitecoreSitePort)"
-    }
-
+    $SqlAdminUser = $SqlServerAdminUser
+    $SqlAdminSecret = $SqlServerAdminPassword
 
     Write-Host "############### Start Installing Sitecore's Instance #############"
     Write-Host "Sitecore's Site: $($SitecoreSiteUrl)"
-    Write-Host "Identity Server: $($SitecoreIdentityServerUrl)"
-    Write-Host "xConnect Url: $($SitecoreXConnectUrl)"
+    Write-Host "Identity Server: $($SitecoreIdentityServerSiteUrl)"
+    Write-Host "xConnect Url: $($SitecoreXConnectSiteUrl)"
     Write-Host "##################################################################"
-
-    If ($SqlServerPort -ne "1433") {
-        $SqlServerHostName = "$($SqlServerHostName), $($SqlServerPort)"
-    }
 
     Install-SitecoreConfiguration -Path (Join-Path -Path $SitecoreInstallPath -ChildPath "sitecore-XP0.json") `
                                     -Package (Join-Path -Path $SitecoreInstallPath -ChildPath "Sitecore_single.scwdp.zip") `
-                                    -SqlServer $SqlServerHostName `
+                                    -SqlServer $SqlServerForConnectionString `
                                     -SqlAdminUser $SqlAdminUser -SqlAdminPassword $SqlAdminSecret `
                                     -SqlSecurityUser $SqlAdminUser -SqlSecurityPassword $SqlAdminSecret `
                                     -SqlDbPrefix $SitecoreInstancePrefix `
@@ -79,16 +49,16 @@ If (-not (Test-Path -Path "$($SitecoreWebRoot)\web.config")) {
                                     -SolrUrl $SolrUrl `
                                     -SolrCorePrefix $SitecoreInstancePrefix `
                                     -XConnectCert $SitecoreInstancePrefix `
-                                    -XConnectCollectionService $SitecoreXConnectUrl `
+                                    -XConnectCollectionService $SitecoreXConnectSiteUrl `
                                     -LicenseFile (Join-Path -Path $SitecoreInstallPath -ChildPath "license.xml") `
-                                    -Sitename $SitecoreSiteHostName `
+                                    -Sitename $SitecoreSite `
                                     -Port $SitecoreSitePort `
                                     -SitecoreAdminPassword $SitecoreAdminSecret `
-                                    -SitecoreIdentityAuthority  $SitecoreIdentityServerUrl `
+                                    -SitecoreIdentityAuthority  $SitecoreIdentityServerSiteUrl `
                                     -SitecoreIdentitySecret $SitecoreIdentityServerClientSecret `
                                     -Skip "DisplayPassword"
 
-    $iisPath = ('IIS:\Sites\{0}' -f $SitecoreSiteHostName); `
+    $iisPath = ('IIS:\Sites\{0}' -f $SitecoreSite); `
     Set-WebConfiguration -PSPath $iisPath -Filter '/system.web/customErrors/@mode' -Value 'Off'; `
     Add-WebConfigurationProperty -PSPath $iisPath -Filter '/system.webServer/rewrite/outboundRules' -Name '.' -Value @{name = 'MakeLocationHeaderRelative' ; preCondition = 'IsSitecoreAbsoluteRedirect'; match = @{serverVariable = 'RESPONSE_LOCATION'; pattern = '(https?://[^:/]+):?([0-9]+)?(.*)'}; action = @{type = 'Rewrite'; value = '{R:3}'}}; `
     Add-WebConfigurationProperty -PSPath $iisPath -Filter '/system.webServer/rewrite/outboundRules/preConditions' -Name '.' -Value @{name = 'IsSitecoreAbsoluteRedirect'}; `
@@ -96,18 +66,18 @@ If (-not (Test-Path -Path "$($SitecoreWebRoot)\web.config")) {
     Add-WebConfigurationProperty -PSPath $iisPath -Filter '/system.webServer/rewrite/outboundRules/preConditions/preCondition[@name=''IsSitecoreAbsoluteRedirect'']' -Name '.' -Value @{input = '{RESPONSE_STATUS}'; pattern = '3[0-9][0-9]'}; `
     
     try {
-        Add-LocalGroupMember -Group 'Performance Monitor Users' -Member ('IIS AppPool\{0}' -f $SitecoreSiteHostName)
+        Add-LocalGroupMember -Group 'Performance Monitor Users' -Member ('IIS AppPool\{0}' -f $SitecoreSite)
     } catch {
-        Write-Host "Warning: Couldn't add IIS AppPool\$($SitecoreSiteHostName) to Performance Monitor Users -- user may already exist" -ForegroundColor Yellow
+        Write-Host "Warning: Couldn't add IIS AppPool\$($SitecoreSite) to Performance Monitor Users -- user may already exist" -ForegroundColor Yellow
     }
 
     try {
-        Add-LocalGroupMember -Group "Performance Log Users" -Member ('IIS AppPool\{0}' -f $SitecoreSiteHostName)
+        Add-LocalGroupMember -Group "Performance Log Users" -Member ('IIS AppPool\{0}' -f $SitecoreSite)
     } catch {
-        Write-Host "Warning: Couldn't add IIS AppPool\$($SitecoreSiteHostName) to Performance Log Users -- user may already exist" -ForegroundColor Yellow
+        Write-Host "Warning: Couldn't add IIS AppPool\$($SitecoreSite) to Performance Log Users -- user may already exist" -ForegroundColor Yellow
     }
 
-    Write-Host "########## Sitecore: $($SitecoreSiteHostName) installed successfully"
+    Write-Host "########## Sitecore: $($SitecoreSite) installed successfully"
 
 }
 

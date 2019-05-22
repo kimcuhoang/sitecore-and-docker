@@ -1,0 +1,8 @@
+version: '3.5'
+
+services:
+    sitecore_xp0:
+        volumes:
+        - ${HOST_CERTIFICATE_PATH}:C:/Certificates
+        - ${HOST_SITECORE_WEBROOT}:C:\inetpub\wwwroot\${SITECORE_INSTANCE_PREFIX}.dev.local
+        - ${SITECORE_PROJECT_SOURCE}:C:\SitecoreProjectSource

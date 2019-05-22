@@ -3,11 +3,12 @@ param (
     [string] $MainHostVolumePath = "E:\SitecoreDocker",
     [string] $CertExportSecret = "PoqNCUErvc",
     [int] $PortInitialize = 9111,
-    [string] $SitecoreProjectSource = "D:\forks\Habitat",
+    [string] $SitecoreProjectSource = "",
     [switch] $Up,
     [switch] $ExecutePostStep,
     [switch] $EnableRemoteDebug,
     [switch] $RetrieveIP,
+    [switch] $Stop,
     [switch] $Down
 )
 
@@ -150,22 +151,27 @@ Function Generate-RunContext {
     $dockerComposeContent = Get-Content -Path $DockerComposeTemplateFile
 
     $newcontent = $dockerComposeContent | ForEach-Object { $_ -replace 'SITECORE_NETWORK', "$($SitecoreInstancePrefix)" }
-
+    
     $newcontent | Set-Content -Path $dockerCompose
+
+    If ($HasProjectSource -eq $true) {
+        Copy-Item -Path "$($TemplatePath)\docker-compose.project.yaml" -Destination "$($RunContextPath)\docker-compose.project.yaml"
+    }
 }
 
-Function Update-Hosts-File {
+Function Add-Host-Names {
     Write-Host "######### Update Hosts file........." -ForegroundColor Yellow
-    $IPAddress = "127.0.0.1"
     $Hosts = @($SitecoreSite, $IdentityServerSite, $xConnectSite, $SqlServerHostName, $SolrHostName)
     $hostsFile = Join-Path -Path $env:windir -ChildPath "system32\drivers\etc\hosts"
 
     $Hosts | ForEach-Object {
+        $IPAddress = & docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$($_)"
         $pattern = '^\s*' + [Regex]::Escape($IPAddress) + '\s*' + [Regex]::Escape($_) + '\s*$'
         $existingEntries = @((Get-Content -Path $hostsFile -Encoding UTF8)) -match $pattern
         if($existingEntries.Count -eq 0) {
             Add-Content -Path $hostsFile -Value "`n$IPAddress`t$_" -Encoding UTF8
             Start-Sleep 2
+            Write-Host "Host entry for $($_) has been added"
         }
     }
 }
@@ -173,26 +179,26 @@ Function Update-Hosts-File {
 Function Remove-Host-Names {
     Write-Host "######### Remove host names .............." -ForegroundColor Yellow
 
-    $IPAddress = "127.0.0.1"
     $Hosts = @($SitecoreSite, $IdentityServerSite, $xConnectSite, $SqlServerHostName, $SolrHostName)
     $hostsFile = Join-Path -Path $env:windir -ChildPath "system32\drivers\etc\hosts"
 
     $Hosts | ForEach-Object {
-        $pattern = '^\s*' + [Regex]::Escape($IPAddress) + '\s*' + [Regex]::Escape($_) + '\s*$'
+        $pattern = '\s*' + [Regex]::Escape($_) + '\s*$'
         $hostsContent = Get-Content -Path $hostsFile -Encoding UTF8
-        $updatedHostsContent = $hostsContent | Select-String -Pattern $pattern -NotMatch
+
+        $updatedHostsContent = $hostsContent -inotmatch $pattern
 
         if ($null -ne $updatedHostsContent -and @(Compare-Object -ReferenceObject $hostsContent -DifferenceObject $updatedHostsContent).Count -eq 0) {
-            Write-Verbose -Message "No existing host entry found for $IPAddress with hostname '$HostName'"
+            Write-Host "No existing host entry found for $($_)"
             return
         }
 
+        
         Set-Content -Path $hostsFile -Value $updatedHostsContent -Encoding UTF8
-        Write-Verbose -Message "Host entry for $IPAddress with hostname '$HostName' has been removed"
         Start-Sleep 2
+        Write-Host "Host entry for $($_) has been removed"
     }
 }
-
 
 Function Import-Certificates {
     Write-Host "######### Import Certificates to $($CertStore)........." -ForegroundColor Yellow
@@ -221,6 +227,10 @@ Function Remove-Certificates {
 ######################################################################################
 
 $RunContextPath = "$($PWD)\run-$($SitecoreInstancePrefix)"
+$HasProjectSource = $true
+If ([string]::IsNullOrWhiteSpace($SitecoreProjectSource)) {
+    $HasProjectSource = $false
+}
 
 If (-not (Test-Path -Path $RunContextPath)) {
     If ($null -eq $PortInitialize) {
@@ -228,8 +238,6 @@ If (-not (Test-Path -Path $RunContextPath)) {
     }
     Generate-RunContext -RunContextPath $RunContextPath
 }
-
-
 
 $CertStore = "Cert:\LocalMachine\Root"
 
@@ -239,27 +247,44 @@ try {
     If ($Up) {
         Init-Volume-Paths
         Generate-Json-Config
-        & docker-compose -f docker-compose.yaml -p "$($SitecoreInstancePrefix)" down -v
-        & docker-compose -f docker-compose.yaml -p "$($SitecoreInstancePrefix)" up -d
-        & docker-compose -f docker-compose.yaml -p "$($SitecoreInstancePrefix)" logs -f -t --tail="all"
+
+        If ($HasProjectSource -eq $false) {
+            & docker-compose -f docker-compose.yaml -p "$($SitecoreInstancePrefix)" down -v
+            & docker-compose -f docker-compose.yaml -p "$($SitecoreInstancePrefix)" up -d
+            & docker-compose -f docker-compose.yaml -p "$($SitecoreInstancePrefix)" logs -f -t --tail="all"
+        } Else {
+            & docker-compose -f docker-compose.yaml -f docker-compose.project.yaml -p "$($SitecoreInstancePrefix)" down -v
+            & docker-compose -f docker-compose.yaml -f docker-compose.project.yaml -p "$($SitecoreInstancePrefix)" up -d
+            & docker-compose -f docker-compose.yaml -f docker-compose.project.yaml -p "$($SitecoreInstancePrefix)" logs -f -t --tail="all"
+        }
     } 
     elseif ($ExecutePostStep) {
-        Update-Hosts-File
-        Import-Certificates
         Write-Host "---------> Restart containers ................"
-        & docker-compose -f docker-compose.yaml -p "$($SitecoreInstancePrefix)" stop
-        & docker-compose -f docker-compose.yaml -p "$($SitecoreInstancePrefix)" start
+        If ($HasProjectSource -eq $false) {
+            & docker-compose -f docker-compose.yaml -p "$($SitecoreInstancePrefix)" stop
+            & docker-compose -f docker-compose.yaml -p "$($SitecoreInstancePrefix)" start
+        } Else {
+            & docker-compose -f docker-compose.yaml -f docker-compose.project.yaml -p "$($SitecoreInstancePrefix)" stop
+            & docker-compose -f docker-compose.yaml -f docker-compose.project.yaml -p "$($SitecoreInstancePrefix)" start
+        }
+        Add-Host-Names
+        Import-Certificates
     }
     elseif ($EnableRemoteDebug) {
-        & docker-compose -f docker-compose.yaml -p "$($SitecoreInstancePrefix)" exec -d sitecore_xp0 "C:/Enable-Remote-Debug.cmd"
+        & docker exec -d "$($SitecoreSite)" "C:/Enable-Remote-Debug.cmd"
     }
     elseif ($RetrieveIP) {
         & docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$($SitecoreSite)"
     }
     elseif ($Down) {
-        & docker-compose -f docker-compose.yaml -p "$($SitecoreInstancePrefix)" down -v
+        
+        If ($HasProjectSource -eq $false) {
+            & docker-compose -f docker-compose.yaml -p "$($SitecoreInstancePrefix)" down -v
+        } Else {
+            & docker-compose -f docker-compose.yaml -f docker-compose.project.yaml -p "$($SitecoreInstancePrefix)" down -v
+        }
+
         Remove-Certificates
-        Remove-Host-Names
         Set-Location $CurentPath
         $FoldersToRemove = @($MainHostVolumePath, $RunContextPath)
         $FoldersToRemove | ForEach-Object {
@@ -267,11 +292,27 @@ try {
                 Remove-Item -Path $_ -Recurse -Force
             }
         }
+        Remove-Host-Names
+
+    } elseif ($Stop) {
+
+        If ($HasProjectSource -eq $false) {
+            & docker-compose -f docker-compose.yaml -p "$($SitecoreInstancePrefix)" stop
+        } Else {
+            & docker-compose -f docker-compose.yaml -f docker-compose.project.yaml -p "$($SitecoreInstancePrefix)" stop
+        }
+
     }
     else {
-        & docker-compose -f docker-compose.yaml -p "$($SitecoreInstancePrefix)" stop
-        & docker-compose -f docker-compose.yaml -p "$($SitecoreInstancePrefix)" start
-        & docker-compose -f docker-compose.yaml -p "$($SitecoreInstancePrefix)" logs -f -t --tail="all"
+        If ($HasProjectSource -eq $false) {
+            & docker-compose -f docker-compose.yaml -p "$($SitecoreInstancePrefix)" stop
+            & docker-compose -f docker-compose.yaml -p "$($SitecoreInstancePrefix)" start
+        } Else {
+            & docker-compose -f docker-compose.yaml -f docker-compose.project.yaml -p "$($SitecoreInstancePrefix)" stop
+            & docker-compose -f docker-compose.yaml -f docker-compose.project.yaml -p "$($SitecoreInstancePrefix)" start
+        }
+        Remove-Host-Names
+        Add-Host-Names
     }
 } catch {
     Write-Host $_.Exception.Message -ForegroundColor Red

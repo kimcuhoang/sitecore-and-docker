@@ -1,4 +1,4 @@
-# Playing Sitecore-9.1.x (xp0) with Docker
+# Playing Sitecore-9.1.1 (xp0) with Docker
 
 ## Prerequisites
 
@@ -22,13 +22,93 @@
    - [Sitecore 9.1.1 rev. 002459 (WDP XP0 packages).zip](https://dev.sitecore.net)
 1. Also, put our Sitecore license - **license.xml** into `Assets` folder
 
-## Build Images Base
+## How to use
 
+- Suppose that the repository is cloned at `D:\sitecore-and-docker` in local
 - Open **PowerShell** as **Administrator** then execute the below command
+- Change the working directory into `D:\sitecore-and-docker` by the below command
 
     ```powershell
-        docker-compose build -m 4g
+    Set-Location -Path "D:\sitecore-and-docker"
     ```
+
+### Build images
+
+- Change the working directory into `sitecore-xp0-images` folder
+
+    ```powershell
+    Set-Location -Path ".\sitecore-xp0-images`
+    ```
+
+- Let's build the docker's images for Sitecore by executing the below command
+
+    ```powershell
+    .\docker.ps1
+    ```
+
+### Install Sitecore
+
+- The Sitecore's sites and services are also installed while starting the docker's containers. But before starting container, we have to modify some configuration values in `docker-run.ps1` to match with current environment.
+
+    ```powershell
+    [string] $SitecoreInstancePrefix = "habitat",
+    [string] $MainHostVolumePath = "E:\SitecoreDocker",
+    [string] $CertExportSecret = "PoqNCUErvc",
+    [int] $PortInitialize = 9111,
+    [string] $SitecoreProjectSource = "",
+    ```
+    > **Explainations:**
+    > - `$MainHostVolumePath`: where data from docker's container is persisted (also know as _Mount Volume_)
+    > - `$PortInitialize`: the initial port number that is bounded for docker's containers. Below are example
+
+    | Host  | Port  |
+    |---|---|
+    | habitat.dev.local | 9111 |
+    | habitat_identiyserver.dev.local | 9112 |
+    | habitat_xconnect.dev.local | 9113 |
+    | habitat_solr | 9114 |
+    | habitat_sqlserver | 9115|
+
+    > - `$SitecoreProjectSource`: it's Unicorn Source; since it's usually stored inside project's source code. Leave it's empty if you don't want to deploy the source code (i.e. **Habitat**)
+
+- Change the working directory to the main folder which is `D:\sitecore-and-docker` for example
+
+    ```powershell
+    Set-Location -Path "D:\sitecore-and-docker"
+    ```
+- Let's up the containers by the following command
+
+    ```powershell
+    .\docker-run.ps1 -Up
+    ```
+- Whenever this log appears, it need to use the combination keys `Ctrl + Z + C` to exit the logs screen
+
+    ```text
+    [-------------------- UpdateSolrSchema : SitecoreUrl -------------------------]
+    [UpdateSolrSchema]:[Authenticating] http://habitat.dev.local:9111/sitecore/admin/PopulateManagedSchema.aspx?indexes=all
+    [UpdateSolrSchema]:[Requesting] http://habitat.dev.local:9111/sitecore/admin/PopulateManagedSchema.aspx?indexes=all
+    [UpdateSolrSchema]:[Success] Completed Request
+
+    [----------- DisplayPassword [Skipped] : WriteInformation --------------------]
+    [TIME] 00:07:12
+    ########## Sitecore: habitat.dev.local installed successfully
+    IIS Started...
+    ```
+- Then execute post steps
+
+    ```powershell
+    .\docker-run.ps1 -ExecutePostStep
+    ```
+    > **The post steps are:**
+    > - Add host entries to hosts file (i.e. `habitat.dev.local`); its IP address is retrieved from docker
+    > - Import the certificate
+    > - Restart the docker's container
+
+### Veirify the installation
+
+- Let's open the browser with the Url `http://habitat.dev.local:9111`
+- Then it will redirect to the Identity Server at `https://habitat_identityserver.dev.local:9112`
+- Use **admin/b** to log in
 
 ## Resources
 
@@ -37,3 +117,6 @@
 - [Microsoft/dotnet-framework-docker](https://github.com/Microsoft/dotnet-framework-docker/blob/master/4.7.2/runtime/windowsservercore-ltsc2019/Dockerfile)
 - [Microsoft/aspnet-docker](https://github.com/Microsoft/aspnet-docker/blob/master/4.7.2-windowsservercore-1709/runtime/Dockerfile)
 - [Debugging Windows containers with Visual Studio](https://medium.com/@marco.fiocco/debugging-windows-containers-with-visual-studio-yes-also-c-apps-740f6e1965b8)
+- [Instances and Ports with PowerShell](https://sqldbawithabeard.com/2015/04/22/instances-and-ports-with-powershell/)
+- [Change SQL Server default TCP port](https://stackoverflow.com/questions/54387592/change-sql-server-default-tcp-port)
+- [View logs output from docker-compose command](https://stackoverflow.com/questions/37195222/how-to-view-log-output-using-docker-compose-run)

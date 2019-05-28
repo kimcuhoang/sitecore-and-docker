@@ -104,7 +104,7 @@
     > - Import the certificate
     > - Restart the docker's container
 
-### Veirify the installation
+### Verify the installation
 
 - Let's open the browser with the Url `http://habitat.dev.local:9111`
 - Then it will redirect to the Identity Server at `https://habitat_identityserver.dev.local:9112`

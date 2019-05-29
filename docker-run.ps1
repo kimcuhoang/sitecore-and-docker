@@ -63,7 +63,7 @@ Function Generate-Json-Config {
         SitecoreSite = @{
             Hostname = $SitecoreSite
             Port = $SitecoreSitePort
-            Url = "http://$($SitecoreSite)"
+            Url = "https://$($SitecoreSite)"
             AdminPassword = 'b'
         }
         SitecoreIdentityServerSite = @{
@@ -200,6 +200,34 @@ Function Remove-Host-Names {
     }
 }
 
+Function Generate-Certificate {
+
+    $CertExportPath = $SubFolders['Certificates']
+    $CertStoreLocation = "Cert:\LocalMachine\My"
+    $CertFile = Join-Path -Path $CertExportPath -ChildPath "$($SitecoreInstancePrefix).pfx"
+    $secret = ConvertTo-SecureString -String $CertExportSecret -Force -AsPlainText
+
+    $cert = Get-ChildItem -Path $_ | Where-Object { $_.Subject -eq "CN=$($SitecoreInstancePrefix)"}
+
+    If ($null -eq $cert) {
+        $IssueDate = Get-Date
+        $ExpireDate = (Get-Date).AddYears(5)
+
+        $HostNames = @("$($IdentityServerSite)", "$($xConnectSite)", "$($SolrHostName)", "$($SitecoreSite)")
+
+        $cert = New-SelfSignedCertificate -DnsName $HostNames `
+                                    -CertStoreLocation $CertStoreLocation `
+                                    -KeyExportPolicy Exportable -Provider 'Microsoft Enhanced RSA and AES Cryptographic Provider' `
+                                    -NotBefore $IssueDate -NotAfter $ExpireDate `
+                                    -FriendlyName $SitecoreInstancePrefix `
+                                    -Subject $SitecoreInstancePrefix
+    } 
+
+    If (-not (Test-Path -Path $CertFile)) {
+        Export-PfxCertificate -cert $cert -FilePath $CertFile -Password $secret
+    }
+}
+
 Function Import-Certificates {
     Write-Host "######### Import Certificates to $($CertStore)........." -ForegroundColor Yellow
     $CertPath = $SubFolders['Certificates']
@@ -247,6 +275,7 @@ try {
     If ($Up) {
         Init-Volume-Paths
         Generate-Json-Config
+        Generate-Certificate
 
         If ($HasProjectSource -eq $false) {
             & docker-compose -f docker-compose.yaml -p "$($SitecoreInstancePrefix)" down -v

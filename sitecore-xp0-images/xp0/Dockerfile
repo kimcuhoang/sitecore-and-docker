@@ -27,17 +27,10 @@ RUN New-Item -Path $env:SITECORE_INSTALL_PATH -ItemType Directory | Out-Null; `
     Copy-Item -Path (Join-Path -Path $env:INSTALL_PATH -ChildPath 'license.xml') -Destination $env:SITECORE_INSTALL_PATH; `
     Remove-Item -Path $env:INSTALL_PATH -Recurse -Force;
 
-## Modify SIF-Json file
-RUN $config = Get-Content (Join-Path -Path $env:SITECORE_INSTALL_PATH -ChildPath 'sitecore-XP0.json')  | Where-Object { $_ -notmatch '^\s*\/\/'} | Out-String | ConvertFrom-Json; `
-    $config.Tasks.InstallWDP.Params.Arguments | Add-Member -Name 'Skip' -Value @(@{'ObjectName' = 'dbDacFx'}, @{'ObjectName' = 'dbFullSql'}) -MemberType NoteProperty; `
-    # $config.Variables.'Site.PhysicalPath' = 'C:\inetpub\wwwroot\{0}' -f $env:SITECORE_SITE_HOST_NAME; `
-    $portParam = @{'Type' = 'int';'DefaultValue' = $env:SITECORE_SITE_PORT;'Description' = 'The port to bind to.'}; `
-    $config.Parameters | Add-Member -Name "Port" -Value $portParam -MemberType NoteProperty; `
-    $config.Tasks.CreateBindings.Params.Add[0] | Add-Member -Name 'Port' -Value '[parameter(''Port'')]' -MemberType NoteProperty; `
-    $config.Tasks.UpdateSolrSchema.Params.SitecoreInstanceRoot = '[concat(''http://'', concat(parameter(''DnsName''),concat('':'', parameter(''Port''))))]'; `
-    ConvertTo-Json $config -Depth 50 | Set-Content -Path (Join-Path -Path $env:SITECORE_INSTALL_PATH -ChildPath 'sitecore-XP0.json')
-
 COPY /Scripts /Scripts
+
+## Modify SIF-Json file
+RUN C:\Scripts\Modify-SIF.ps1 -SitecoreInstallPath $env:SITECORE_INSTALL_PATH
 
 EXPOSE ${SITECORE_SITE_PORT} 4022 4023
 

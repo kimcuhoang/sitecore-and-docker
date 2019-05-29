@@ -53,6 +53,7 @@ If (-not (Test-Path -Path "$($SitecoreWebRoot)\web.config")) {
                                     -LicenseFile (Join-Path -Path $SitecoreInstallPath -ChildPath "license.xml") `
                                     -Sitename $SitecoreSite `
                                     -Port $SitecoreSitePort `
+                                    -SSLCert $SitecoreInstancePrefix `
                                     -SitecoreAdminPassword $SitecoreAdminSecret `
                                     -SitecoreIdentityAuthority  $SitecoreIdentityServerSiteUrl `
                                     -SitecoreIdentitySecret $SitecoreIdentityServerClientSecret `

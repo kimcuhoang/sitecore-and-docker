@@ -25,10 +25,10 @@ Function Update-Hosts-File {
 
 . "C:\Scripts\Parameters.ps1" -SitecoreInstancePrefix $SitecoreInstancePrefix
 
-Write-Host "=====> Generate Certificate..................."
-& "C:\Scripts\Generate-Certificate.ps1" -SitecoreInstancePrefix $SitecoreInstancePrefix `
-                                        -CertExportPath $CertPath `
-                                        -CertExportSecret $CertExportPassword
+# Write-Host "=====> Generate Certificate..................."
+# & "C:\Scripts\Generate-Certificate.ps1" -SitecoreInstancePrefix $SitecoreInstancePrefix `
+#                                         -CertExportPath $CertPath `
+#                                         -CertExportSecret $CertExportPassword
 
 Write-Host "=====> Import Certificate..................."
 & "C:\Scripts\Import-Certificate.ps1" -SitecoreInstancePrefix $SitecoreInstancePrefix `
@@ -56,7 +56,6 @@ If ((Get-ChildItem "$($SolrDataPath)" | Measure-Object).Count -eq 0) {
         $content | Set-Content -Path "$($_.FullName)\core.properties"
         Rename-Item -Path $_.FullName -NewName $newname
     }
-    
 }
 
 $env:SOLR_HOME = $SolrDataPath

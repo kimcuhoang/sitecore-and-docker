@@ -25,6 +25,7 @@ RUN New-Item -Path $env:SITECORE_INSTALL_PATH -ItemType Directory | Out-Null; `
     Copy-Item -Path (Join-Path -Path $env:INSTALL_PATH -ChildPath 'sitecore-XP0.json') -Destination $env:SITECORE_INSTALL_PATH; `
     Copy-Item -Path (Join-Path -Path $env:INSTALL_PATH -ChildPath 'Sitecore_single.scwdp.zip') -Destination $env:SITECORE_INSTALL_PATH; `
     Copy-Item -Path (Join-Path -Path $env:INSTALL_PATH -ChildPath 'license.xml') -Destination $env:SITECORE_INSTALL_PATH; `
+    Copy-Item -Path ('{0}\{1}\*' -f $env:INSTALL_PATH,'SitecorePackages' ) -Filter '*.scwdp.zip' -Destination $env:SITECORE_INSTALL_PATH; `
     Remove-Item -Path $env:INSTALL_PATH -Recurse -Force;
 
 COPY /Scripts /Scripts

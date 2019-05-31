@@ -37,6 +37,7 @@ RUN Expand-Archive -Path ('{0}\{1}' -f $env:INSTALL_PATH,'solr-*.zip') -Destinat
     Move-Item -Path ('{0}\{1}' -f $env:INSTALL_PATH,'solr-*\\*') -Destination $env:SOLR_PATH;
 
 RUN Remove-Item -Path $env:INSTALL_PATH -Recurse -Force;
+COPY /Scripts /Scripts
 
 RUN & ('{0}\bin\solr.cmd' -f $env:SOLR_PATH) start -port $env:SOLR_PORT_ARG; `
     Install-SitecoreConfiguration -Path ('{0}\sitecore-solr.json' -f $env:SIF_CONFIG_PATH) `
@@ -51,9 +52,12 @@ RUN & ('{0}\bin\solr.cmd' -f $env:SOLR_PATH) start -port $env:SOLR_PORT_ARG; `
                                     -SolrService "void" `
                                     -CorePrefix $env:DEFAULT_SOLR_CORE_PREFIX `
                                     -Skip "StopSolr", "StartSolr"; `
+    Install-SitecoreConfiguration -Path 'C:\Scripts\SIFs\sxa-solr.json' `
+                                    -SolrConfigJson 'C:\Scripts\SIFs\sxa-solr-config.json' `
+                                    -SolrUrl ('http://localhost:{0}/solr' -f $env:SOLR_PORT_ARG) `
+                                    -SolrRoot $env:SOLR_PATH `
+                                    -CorePrefix $env:DEFAULT_SOLR_CORE_PREFIX; `
     Get-Process -Name "java" | Stop-Process -Force;
-
-COPY /Scripts /Scripts
 
 EXPOSE ${SOLR_PORT}
 

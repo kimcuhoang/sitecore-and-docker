@@ -32,9 +32,9 @@ If (-not (Test-Path -Path "$($SitecoreWebRoot)\web.config")) {
     Install-SitecoreConfiguration -Path (Join-Path -Path $SitecoreInstallPath -ChildPath "sitecore-XP0.json") `
                                     -Package (Join-Path -Path $SitecoreInstallPath -ChildPath "Sitecore_single.scwdp.zip") `
                                     -SqlServer $SqlServerForConnectionString `
+                                    -SqlDbPrefix $SitecoreInstancePrefix `
                                     -SqlAdminUser $SqlAdminUser -SqlAdminPassword $SqlAdminSecret `
                                     -SqlSecurityUser $SqlAdminUser -SqlSecurityPassword $SqlAdminSecret `
-                                    -SqlDbPrefix $SitecoreInstancePrefix `
                                     -SqlCoreUser $SqlAdminUser -SqlCorePassword $SqlAdminSecret `
                                     -SqlMasterUser $SqlAdminUser -SqlMasterPassword $SqlAdminSecret `
                                     -SqlWebUser $SqlAdminUser -SqlWebPassword $SqlAdminSecret `
@@ -57,7 +57,7 @@ If (-not (Test-Path -Path "$($SitecoreWebRoot)\web.config")) {
                                     -SitecoreAdminPassword $SitecoreAdminSecret `
                                     -SitecoreIdentityAuthority  $SitecoreIdentityServerSiteUrl `
                                     -SitecoreIdentitySecret $SitecoreIdentityServerClientSecret `
-                                    -Skip "DisplayPassword"
+                                    -Skip "UpdateSolrSchema", "DisplayPassword"
 
     $iisPath = ('IIS:\Sites\{0}' -f $SitecoreSite); `
     Set-WebConfiguration -PSPath $iisPath -Filter '/system.web/customErrors/@mode' -Value 'Off'; `
@@ -79,7 +79,28 @@ If (-not (Test-Path -Path "$($SitecoreWebRoot)\web.config")) {
     }
 
     Write-Host "########## Sitecore: $($SitecoreSite) installed successfully"
+    Write-Host "########################################"
+    Write-Host "########## Install SPE & SXA ##############"
+    $Modules = @(
+        "Sitecore PowerShell Extensions",
+        "Sitecore Experience Accelerator"
+    )
 
+    $InstallModuleSIF = Resolve-Path "$($PSScriptRoot)\SIFs\install-module.json"
+    $Modules | ForEach-Object {
+        $package = Get-Item -Path "$($SitecoreInstallPath)\$($_)*.scwdp.zip"
+
+        Install-SitecoreConfiguration -Path "$($InstallModuleSIF)" `
+                                    -Package "$($package.FullName)" `
+                                    -SiteName $SitecoreSite
+    }
+
+    Write-Host "########## Configure SXA Search Indexes ##############"
+    Install-SitecoreConfiguration -Path (Resolve-Path "$($PSScriptRoot)\SIFs\configure-search-indexes.json") `
+                                    -SiteName $SitecoreSite `
+                                    -SolrCorePrefix $SitecoreInstancePrefix `
+                                    -SitecoreSiteUrl $SitecoreSiteUrl `
+                                    -SitecoreAdminPassword $SitecoreAdminSecret
 }
 
 $w3svcService = Get-Service -Name "w3svc"

@@ -41,6 +41,7 @@ RUN $AssetInstallPath = $env:INSTALL_PATH; `
     $FreshDatabasesPath = $env:SQLSERVER_DATA_BACKUP_PATH;`
     $DatabasePrefix = $env:DEFAULT_DB_PREFIX; `
     & C:\Scripts\Extract-Databases.ps1 -AssetInstallPath $AssetInstallPath; `
+    & C:\Scripts\Extract-Databases.ps1 -AssetInstallPath ('{0}\{1}' -f $AssetInstallPath,'SitecorePackages') -IsSitecorePackage; `
     & C:\Scripts\Install-Databases.ps1 -AssetInstallPath $AssetInstallPath `
                                        -DatabasesPath $FreshDatabasesPath `
                                        -DatabasePrefix $DatabasePrefix; `

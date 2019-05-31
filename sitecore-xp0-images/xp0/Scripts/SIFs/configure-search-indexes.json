@@ -1,0 +1,62 @@
+{
+    "Parameters": {
+        "SiteName": {
+            "Type": "string",
+            "DefaultValue": "",
+            "Description": "The name of the site to be deployed."
+        },
+        "SolrCorePrefix": {
+            "Type": "string",
+            "Description": "The prefix used for all Solr cores.",
+            "DefaultValue" : ""
+        },
+        "SitecoreSiteUrl": {
+            "Type": "string",
+            "Description": "The Url of site",
+            "DefaultValue" : ""
+        },
+        "SitecoreAdminPassword": {
+            "Type": "string",
+            "DefaultValue": "",
+            "Description": "The admin password for the Sitecore instance."
+        }
+    },
+    "Variables": {
+        "SolrSearchMasterIndexCoreNameXpath": "//configuration/sitecore/contentSearch/configuration/indexes/index[@id='sitecore_sxa_master_index']/param[@desc='core']",
+        "SolrSearchWebIndexCoreNameXpath": "//configuration/sitecore/contentSearch/configuration/indexes/index[@id='sitecore_sxa_web_index']/param[@desc='core']",
+        "Site.PhysicalPath": "[joinpath(environment('SystemDrive'), 'inetpub', 'wwwroot', parameter('SiteName'))]",
+        "SolrSearchConfig": "[concat(variable('Site.PhysicalPath'), '\\App_Config\\Modules\\SXA\\Z.Foundation.Overrides\\Sitecore.XA.Foundation.Search.Solr.config')]"
+    },
+    "Tasks": {
+        "UpdateMasterSXAIndex": {
+            "Type": "SetXml",
+            "Params": [
+                {
+                    "FilePath": "[variable('SolrSearchConfig'))]",
+                    "Xpath": "[variable('SolrSearchMasterIndexCoreNameXpath')]",
+                    "Value": "[concat(parameter('SolrCorePrefix'), '_sxa_master_index')]"
+                }
+            ]
+        },
+        "UpdateWebSXAIndex": {
+            "Type": "SetXml",
+            "Params": [
+                {
+                    "FilePath": "[variable('SolrSearchConfig'))]",
+                    "Xpath": "[variable('SolrSearchWebIndexCoreNameXpath')]",
+                    "Value": "[concat(parameter('SolrCorePrefix'), '_sxa_web_index')]"
+                }
+            ]
+        },
+        "UpdateSolrSchema": {
+            "Description": "Update the solr schemas.",
+            "Type": "SitecoreUrl",
+            "Params": {
+                "SitecoreInstanceRoot": "[parameter('SitecoreSiteUrl')]",
+                "SitecoreActionPath": "sitecore/admin/PopulateManagedSchema.aspx?indexes=all",
+                "UserName": "admin",
+                "Password": "[parameter('SitecoreAdminPassword')]"
+            }
+        }
+    }
+}

@@ -1,0 +1,65 @@
+{
+    "Parameters": {
+      "Package": {
+        "Type": "string",
+        "DefaultValue": "",
+        "Description": "The path to the SCWDP  to deploy."
+      },
+      "SiteName": {
+        "Type": "string",
+        "DefaultValue": "Sitecore",
+        "Description": "The name of the site to be deployed."
+      },
+      "SqlCoreUser": {
+        "Type": "string",
+        "Description": "The path to the content management site.",
+        "DefaultValue": "<none>"
+      },
+      "SqlMasterUser": {
+          "Type": "string",
+          "Description": "The path to the content management site.",
+          "DefaultValue": "<none>"
+      }
+    },
+    "Settings": {
+      "AutoRegisterExtensions": true
+    },
+    "Tasks": {
+      "InstallSitecorePackage": {
+          "Type": "WebDeploy",
+          "Params": {
+              "Verb": "Sync",
+              "Arguments": {
+                  "Source": {
+                      "Package": "[resolvepath(parameter('Package'))]"
+                  },
+                  "Dest": "Auto",
+                  "SetParam": [
+                      {
+                          "Name": "Application Path",
+                          "Value": "[parameter('SiteName')]"
+                      },
+                      {
+                        "Name": "Core Admin Connection String",
+                        "Value": "[parameter('SqlCoreUser')]"
+                      },
+                      {
+                          "Name": "Master Admin Connection String",
+                          "Value": "[parameter('SqlMasterUser')]"
+                      }
+                  ],
+                  "EnableRule": "DoNotDelete",
+                  "UseChecksum": true,
+                  "Skip": [
+                      {
+                          "ObjectName": "dbFullSql"
+                      },
+                      {
+                          "ObjectName": "dbDacFx"
+                      }
+                  ]
+              }
+          }
+      }
+    }
+  }

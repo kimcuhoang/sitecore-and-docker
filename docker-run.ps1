@@ -1,5 +1,5 @@
 param (
-    [string] $SitecoreInstancePrefix = "habitat",
+    [string] $SitecoreInstancePrefix = "sc911",
     [string] $MainHostVolumePath = "E:\SitecoreDocker",
     [string] $CertExportSecret = "PoqNCUErvc",
     [int] $PortInitialize = 9111,
@@ -250,6 +250,7 @@ Function Remove-Certificates {
         Get-ChildItem -Path $CertStore | Where-Object { $_.Subject -eq "CN=$($Sitename)"} | Remove-Item
     }
 }
+
 
 ######################################################################################
 ######################################################################################

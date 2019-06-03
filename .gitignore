@@ -5,3 +5,4 @@
 *.pfx
 license.xml
 /run-*
+/sitecore-xp0-images/assets

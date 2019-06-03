@@ -1,4 +1,6 @@
-Anytime execute `docker.ps1`, it'll copy the following files automatically into there:
+Download and put the following packages
+
+1- Prerequisites:
 
 - java-1.8.0-openjdk-1.8.0.161-1.b14.ojdkbuild.windows.x86_64.zip
 - solr-7.2.1.zip
@@ -9,5 +11,9 @@ Anytime execute `docker.ps1`, it'll copy the following files automatically into 
 - VC_redist.x64.exe
 - vs_remotetool.exe
 - dotnet-hosting-2.1.3-win.exe
+
+
+2- Sitecore:
+
 - Sitecore 9.1.1 rev. 002459 (WDP XP0 packages).zip
 - license.xml
